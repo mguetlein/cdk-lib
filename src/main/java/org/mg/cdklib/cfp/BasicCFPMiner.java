@@ -1,0 +1,448 @@
+package org.mg.cdklib.cfp;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.mg.cdklib.CDKConverter;
+import org.mg.javalib.datamining.ResultSet;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.DoubleArraySummary;
+import org.mg.javalib.util.FileUtil;
+import org.mg.javalib.util.HashUtil;
+import org.mg.javalib.util.SetUtil;
+import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.fingerprint.BitSetFingerprint;
+import org.openscience.cdk.fingerprint.CircularFingerprinter;
+import org.openscience.cdk.fingerprint.IBitFingerprint;
+import org.openscience.cdk.interfaces.IAtomContainer;
+
+public class BasicCFPMiner implements Serializable
+{
+	private static final long serialVersionUID = 1L;
+
+	protected int numCompounds = 0;
+	protected List<String> trainingDataSmiles;
+	protected LinkedHashMap<CFPFragment, LinkedHashSet<Integer>> fragmentToCompound = new LinkedHashMap<CFPFragment, LinkedHashSet<Integer>>();
+	protected int numUnfoldedConflicts = 0;
+
+	protected CFPType type;
+	protected FeatureSelection featureSelection;
+	protected int hashfoldsize;
+	protected int absMinFreq = 2;
+
+	transient CircularFingerprinter fp;
+	transient CFPFragment[] fragmentList;
+	transient HashMap<Integer, LinkedHashSet<CFPFragment>> compoundToFragment;
+	transient HashMap<CFPFragment, Integer> fragmentToIteration = new HashMap<CFPFragment, Integer>();
+	transient HashMap<CFPFragment, Integer> fragmentToNumAtoms = new HashMap<CFPFragment, Integer>();
+	transient HashMap<IAtomContainer, LinkedHashSet<CFPFragment>> testMoleculeToFragment;
+	transient private HashMap<Integer, Set<Integer>> collisionMap;
+
+	public BasicCFPMiner()
+	{
+	}
+
+	public List<String> getTrainingDataSmiles()
+	{
+		return trainingDataSmiles;
+	}
+
+	public int getHashfoldsize()
+	{
+		return hashfoldsize;
+	}
+
+	public int getNumFragments()
+	{
+		return fragmentToCompound.size();
+	}
+
+	public CFPType getCFPType()
+	{
+		return type;
+	}
+
+	public FeatureSelection getFeatureSelection()
+	{
+		return featureSelection;
+	}
+
+	public String getFeatureType()
+	{
+		return featureSelection.attribute() + " " + type.toNiceString();
+	}
+
+	public void setType(CFPType type)
+	{
+		this.type = type;
+	}
+
+	public void setFeatureSelection(FeatureSelection featureSelection)
+	{
+		this.featureSelection = featureSelection;
+	}
+
+	public void setHashfoldsize(int hashfoldsize)
+	{
+		this.hashfoldsize = hashfoldsize;
+	}
+
+	public boolean isFragmentIncludedInCompound(int compound, CFPFragment fragment)
+	{
+		if (fragmentToCompound.get(fragment) == null)
+			throw new IllegalStateException("no compounds for fragment, should have been removed! " + fragment + " "
+					+ fragmentToCompound.get(fragment));
+		return (fragmentToCompound.get(fragment).contains(compound));
+	}
+
+	private void initCircularFingerprinter()
+	{
+		collisionMap = new HashMap<>();
+		fp = new CircularFingerprinter(type.getClassType())
+		{
+			public IBitFingerprint getBitFingerprint(IAtomContainer mol) throws CDKException
+			{
+				calculate(mol);
+				if (featureSelection != FeatureSelection.fold)
+					return null;
+				final BitSet bits = new BitSet(hashfoldsize);
+				for (int n = 0; n < getFPCount(); n++)
+				{
+					int i = getFP(n).hashCode;
+					long b = i >= 0 ? i : ((i & 0x7FFFFFFF) | (1L << 31));
+					int bit = (int) (b % hashfoldsize);
+					if (!collisionMap.containsKey(bit))
+						collisionMap.put(bit, new HashSet<Integer>());
+					collisionMap.get(bit).add(i);
+					bits.set(bit);
+				}
+				return new BitSetFingerprint(bits);
+			}
+		};
+	}
+
+	public int[] getAtoms(String smiles, CFPFragment fragment) throws Exception
+	{
+		return getAtoms(CDKConverter.parseSmiles(smiles), fragment);
+	}
+
+	public int[] getAtoms(IAtomContainer mol, CFPFragment fragment) throws Exception
+	{
+		if (featureSelection == FeatureSelection.fold)
+			throw new IllegalArgumentException();
+		int atoms[] = null;
+		initCircularFingerprinter();
+		fp.getBitFingerprint(mol);
+		for (int i = 0; i < fp.getFPCount(); i++)
+		{
+			if (fp.getFP(i).hashCode == fragment.getId())
+			{
+				atoms = fp.getFP(i).atoms;
+				break;
+			}
+		}
+		return atoms;
+	}
+
+	private static transient HashMap<Integer, Set<Integer>> atomsMultCache = new HashMap<>();
+
+	/**
+	 * fragment may occur multiple times
+	 * 
+	 * @param mol
+	 * @param fragment
+	 * @return
+	 * @throws Exception
+	 */
+	public Set<Integer> getAtomsMultiple(IAtomContainer mol, CFPFragment fragment) throws Exception
+	{
+		if (featureSelection == FeatureSelection.fold)
+			throw new IllegalArgumentException();
+
+		Integer key = HashUtil.hashCode(type, mol, fragment);
+		if (!atomsMultCache.containsKey(key))
+		{
+			Set<Integer> atoms = new HashSet<>();
+			initCircularFingerprinter();
+			fp.getBitFingerprint(mol);
+			for (int i = 0; i < fp.getFPCount(); i++)
+				if (fp.getFP(i).hashCode == fragment.getId())
+					for (int a : fp.getFP(i).atoms)
+						atoms.add(a);
+			atomsMultCache.put(key, atoms);
+		}
+		return atomsMultCache.get(key);
+	}
+
+	public void mine(List<String> smiles) throws Exception
+	{
+		this.trainingDataSmiles = smiles;
+
+		initCircularFingerprinter();
+		for (String smi : smiles)
+		{
+			IBitFingerprint finger = fp.getBitFingerprint(CDKConverter.parseSmiles(smi));
+			if (featureSelection == FeatureSelection.fold)
+				for (int i : finger.getSetbits())
+					insert(fragmentToCompound, new CFPFragment(i), numCompounds);
+			else
+				for (int i = 0; i < fp.getFPCount(); i++)
+				{
+					//					if (fp.getFP(i).hashCode == 1039376976)
+					//					{
+					//						System.err.println(fp.getFP(i).atoms.length + " " + ArrayUtil.toString(fp.getFP(i).atoms));
+					//						try
+					//						{
+					//							drawFP(null, mol, fp.getFP(i).atoms);
+					//						}
+					//						catch (Exception e)
+					//						{
+					//							e.printStackTrace();
+					//						}
+					//					}
+					CFPFragment frag = new CFPFragment(fp.getFP(i).hashCode);
+					insert(fragmentToCompound, frag, numCompounds);
+					boolean conflict = check(fragmentToIteration, frag, fp.getFP(i).iteration);
+					conflict |= check(fragmentToNumAtoms, frag, fp.getFP(i).atoms.length);
+					if (conflict)
+					{
+						//						System.err.println(fp.getFP(i).hashCode);
+						//						if (numUnfoldedConflicts > 5)
+						//							System.exit(1);
+						numUnfoldedConflicts++;
+					}
+				}
+			numCompounds++;
+		}
+	}
+
+	private static <T1, T2> void insert(HashMap<T1, LinkedHashSet<T2>> map, T1 key, T2 val)
+	{
+		if (!map.containsKey(key))
+			map.put(key, new LinkedHashSet<T2>());
+		map.get(key).add(val);
+	}
+
+	private static <T> boolean check(HashMap<T, Integer> map, T key, int val)
+	{
+		if (map.containsKey(key) && map.get(key) != val)
+			return true; //System.err.println("conflict " + key + " val1: " + val + " val2:" + map.get(key));
+		map.put(key, val);
+		return false;
+	}
+
+	public LinkedHashSet<Integer> getCompoundsForFragment(CFPFragment fragment)
+	{
+		return fragmentToCompound.get(fragment);
+	}
+
+	public LinkedHashSet<CFPFragment> getFragmentsForCompound(Integer compound)
+	{
+		if (compoundToFragment == null)
+		{
+			compoundToFragment = new HashMap<Integer, LinkedHashSet<CFPFragment>>();
+			for (CFPFragment f : fragmentToCompound.keySet())
+				for (Integer c : fragmentToCompound.get(f))
+					insert(compoundToFragment, c, f);
+		}
+		if (compoundToFragment.containsKey(compound))
+			return compoundToFragment.get(compound);
+		else
+			return new LinkedHashSet<CFPFragment>();
+	}
+
+	public double getTanimotoSimilarity(int i, int j)
+	{
+		HashSet<CFPFragment> h1 = getFragmentsForCompound(i);
+		HashSet<CFPFragment> h2 = getFragmentsForCompound(j);
+		int and = SetUtil.intersectSize(h1, h2);
+		int or = h1.size() + h2.size() - and;
+		return and / (double) or;
+	}
+
+	public CFPFragment getFragmentViaIdx(int fragmentIdx)
+	{
+		if (fragmentList == null)
+		{
+			fragmentList = new CFPFragment[fragmentToCompound.size()];
+			int idx = 0;
+			for (CFPFragment h : fragmentToCompound.keySet())
+				fragmentList[idx++] = h;
+		}
+		return fragmentList[fragmentIdx];
+	}
+
+	public LinkedHashSet<CFPFragment> getFragmentsForTestCompound(String smiles) throws Exception
+	{
+		return getFragmentsForTestCompound(CDKConverter.parseSmiles(smiles));
+	}
+
+	public LinkedHashSet<CFPFragment> getFragmentsForTestCompound(IAtomContainer testMol) throws CDKException
+	{
+		if (testMoleculeToFragment == null)
+			testMoleculeToFragment = new HashMap<IAtomContainer, LinkedHashSet<CFPFragment>>();
+		if (!testMoleculeToFragment.containsKey(testMol))
+		{
+			if (fp == null)
+				initCircularFingerprinter();
+			LinkedHashSet<CFPFragment> fragments = new LinkedHashSet<CFPFragment>();
+			IBitFingerprint finger = fp.getBitFingerprint(testMol);
+			if (featureSelection == FeatureSelection.fold)
+				for (int i : finger.getSetbits())
+					fragments.add(new CFPFragment(i));
+			else
+				for (int i = 0; i < fp.getFPCount(); i++)
+					fragments.add(new CFPFragment(fp.getFP(i).hashCode));
+			testMoleculeToFragment.put(testMol, fragments);
+		}
+		return testMoleculeToFragment.get(testMol);
+	}
+
+	@SuppressWarnings("unchecked")
+	public BasicCFPMiner clone()
+	{
+		BasicCFPMiner f = new BasicCFPMiner();
+		f.type = type;
+		f.hashfoldsize = hashfoldsize;
+		f.featureSelection = featureSelection;
+		f.absMinFreq = absMinFreq;
+		f.numCompounds = numCompounds;
+		for (CFPFragment frag : fragmentToCompound.keySet())
+			f.fragmentToCompound.put(frag, (LinkedHashSet<Integer>) fragmentToCompound.get(frag).clone());
+		return f;
+	}
+
+	public int getNumCompounds()
+	{
+		return numCompounds;
+	}
+
+	public ResultSet getSummary(boolean nice)
+	{
+		ResultSet set = new ResultSet();
+		int idx = set.addResult();
+		//set.setResultValue(idx, "name", getName());
+		//		if (!nice)
+		//			set.setResultValue(idx, "Endpoints", CountedSet.create(endpoints));
+		set.setResultValue(idx, "Num fragments", fragmentToCompound.size());
+		if (!nice)
+			set.setResultValue(idx, "Num compounds", numCompounds);
+		set.setResultValue(idx, "Fragment type", nice ? type.toNiceString() : type);
+		set.setResultValue(idx, "Feature selection", nice ? featureSelection.toNiceString() : featureSelection);
+		//		if (featureSelection == FeatureSelection.filter)
+		//		{
+		//			set.setResultValue(idx, "Min frequency (relative/absolute)",
+		//					relMinFreq + " / " + (int) Math.round(relMinFreq * numCompounds));
+		//			set.setResultValue(idx, Character.toString((char) 967) + Character.toString((char) 178) + " max p-value",
+		//					pValueThreshold);
+		//		}
+		if (!nice)
+			set.setResultValue(idx, "Fingerprint size", hashfoldsize);
+		if (!nice)
+		{
+			set.setResultValue(idx, "num unfolded conflicts", numUnfoldedConflicts);
+			int n = 0;
+			for (int c = 0; c < numCompounds; c++)
+				if (getFragmentsForCompound(c).isEmpty())
+					n++;
+			set.setResultValue(idx, "compounds w/o hash code", n);
+			List<Integer> cmps = new ArrayList<>();
+			List<String> cmpsStr = new ArrayList<>();
+			for (CFPFragment fragment : fragmentToCompound.keySet())
+			{
+				cmps.add(fragmentToCompound.get(fragment).size());
+				cmpsStr.add(fragmentToCompound.get(fragment).size() + "");
+			}
+			set.setResultValue(idx, "mean compounds per fragment", DoubleArraySummary.create(cmps));
+			CountedSet<String> setStr = CountedSet.create(cmpsStr);
+			for (Integer f : new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
+				set.setResultValue(idx, "fragment with freq " + f + ": ", setStr.getCount(f + ""));
+
+			List<Integer> numFragments = new ArrayList<>();
+			for (int c = 0; c < numCompounds; c++)
+				numFragments.add(getFragmentsForCompound(c).size());
+			set.setResultValue(idx, "mean fragments per compound", DoubleArraySummary.create(numFragments));
+
+			if (featureSelection == FeatureSelection.fold)
+			{
+				estimateCollisions(set, idx, "");
+			}
+		}
+		return set;
+	}
+
+	public void estimateCollisions(ResultSet set, int idx, String prefix)
+	{
+		List<Integer> counts = new ArrayList<Integer>();
+		List<String> countsStr = new ArrayList<String>();
+		int numCollisions = 0;
+		int numBits = 0;
+		for (int i = 0; i < hashfoldsize; i++)
+			if (collisionMap.containsKey(i))
+			{
+				if (collisionMap.get(i).size() > 1)
+					numCollisions++;
+				numBits++;
+				counts.add(collisionMap.get(i).size());
+				countsStr.add(collisionMap.get(i).size() + "");
+			}
+			else
+				countsStr.add("0");
+
+		//		set.setResultValue(idx, prefix + "collisions", numCollisions + "/" + numBits);
+		set.setResultValue(idx, prefix + "collisions", (double) numCollisions / numBits);
+
+		//		set.setResultValue(idx, prefix + "collision ratio", numCollisions / (double) numBits);
+		DoubleArraySummary occu = DoubleArraySummary.create(counts);
+		set.setResultValue(idx, prefix + "bit-load", occu.getMean());
+
+		//		CountedSet<String> occuStr = CountedSet.create(countsStr);
+		//		for (Integer f : new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 })
+		//			set.setResultValue(idx, prefix + "bits with #" + f + " fragments", occuStr.getCount(f + ""));
+	}
+
+	public String toString()
+	{
+		return getSummary(false).translate().toNiceString();
+	}
+
+	//	LinkedHashMap<Pair, Set<Integer>> pairAdjacent = new LinkedHashMap<>();
+
+	public void toCSVFile(String path, List<String> smiles, List<?> endpoints)
+	{
+		if (smiles.size() != numCompounds)
+			throw new IllegalArgumentException();
+
+		StringBuffer s = new StringBuffer();
+		s.append("SMILES,endpoint");
+		for (CFPFragment f : fragmentToCompound.keySet())
+			s.append("," + f);
+		s.append("\n");
+		for (int c = 0; c < numCompounds; c++)
+		{
+			s.append(smiles.get(c) + "," + endpoints.get(c));
+			for (CFPFragment f : fragmentToCompound.keySet())
+				s.append("," + (getFragmentsForCompound(c).contains(f) ? "1" : "0"));
+			s.append("\n");
+		}
+		FileUtil.writeStringToFile(path, s.toString());
+	}
+
+	public String getName()
+	{
+		String suffix = "";
+		if (featureSelection == FeatureSelection.fold)
+			suffix = "_" + hashfoldsize;
+		else if (featureSelection == FeatureSelection.filt)
+			suffix = "_" + hashfoldsize;
+		return type + "_" + featureSelection + suffix;
+	}
+
+}
