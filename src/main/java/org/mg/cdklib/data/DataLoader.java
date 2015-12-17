@@ -349,8 +349,6 @@ public class DataLoader
 		this.dataFolder = dataFolder;
 	}
 
-	
-
 	//	public boolean exists(String name)
 	//	{
 	//		if (datasets.containsKey(name))
@@ -558,7 +556,59 @@ public class DataLoader
 			warnings.add("Removed " + invalidCompound + " compounds that could not be read by the CDK library.");
 		if (missingEndpoint > 0)
 			warnings.add("Removed " + missingEndpoint + " compounds with missing/invalid enpoint values.");
-		return new CDKDataset(smiles, endpoints, warnings);
+
+		return createDataset(name, smiles, endpoints, warnings);
+	}
+
+	private static CDKDataset createDataset(String name, List<String> smiles, List<String> endpoints,
+			List<String> warnings) throws CDKException
+	{
+		HashMap<String, HashSet<String>> inchiToActivity = new HashMap<>();
+		int idx = 0;
+		for (String smi : smiles)
+		{
+			String inch = CDKConverter.toInchi(smi);
+			if (!inchiToActivity.containsKey(inch))
+				inchiToActivity.put(inch, new HashSet<String>());
+			inchiToActivity.get(inch).add(endpoints.get(idx));
+			idx++;
+		}
+
+		List<String> uSmiles = new ArrayList<>();
+		List<String> uEndpoints = new ArrayList<>();
+		HashSet<String> inchiAdded = new HashSet<>();
+		int skipEq = 0;
+		int skipDiff = 0;
+		for (int i = 0; i < smiles.size(); i++)
+		{
+			//					System.out.println(i + " " + smiles.get(i));
+			String inchi = CDKConverter.toInchi(smiles.get(i));
+			if (inchiAdded.contains(inchi))
+			{
+				skipEq++;
+				//						System.out.println("skip equal value duplicate: " + i + " " + inchiToActivity.get(inchi) + " "
+				//								+ smiles.get(i) + " " + inchi);
+			}
+			else if (inchiToActivity.get(inchi).size() > 1)
+			{
+				skipDiff++;
+				//						System.out.println("skip different value duplicate: " + i + " " + inchiToActivity.get(inchi)
+				//								+ " " + smiles.get(i) + " " + inchi);
+			}
+			else
+			{
+				uSmiles.add(smiles.get(i));
+				uEndpoints.add(endpoints.get(i));
+				inchiAdded.add(inchi);
+			}
+		}
+		if (skipEq > 0)
+			warnings.add("Removed " + skipEq + " duplicate occurences of compounds (with equal endpoint values).");
+		if (skipDiff > 0)
+			warnings.add("Removed " + skipDiff
+					+ " compounds that occured multiple times with different endpoint values.");
+
+		return new CDKDataset(name, uSmiles, uEndpoints, warnings);
 	}
 
 	private boolean hasDuplicatesSDF(String name) throws Exception
@@ -581,7 +631,7 @@ public class DataLoader
 		return CountedSet.create(smiles).getMaxCount(false) > 1;
 	}
 
-	private CDKDataset getDatasetFromCSV(String name)
+	private CDKDataset getDatasetFromCSV(String name) throws CDKException
 	{
 		List<String> endpoints = new ArrayList<>();
 		List<String> smiles = new ArrayList<>();
@@ -593,7 +643,7 @@ public class DataLoader
 			endpoints.add(csv.content.get(i)[1]);
 		}
 
-		return new CDKDataset(smiles, endpoints, new ArrayList<String>());
+		return createDataset(name, smiles, endpoints, new ArrayList<String>());
 	}
 
 	private boolean hasDuplicatesCSV(String name) throws CDKException
