@@ -21,7 +21,9 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class CFPMiner extends BasicCFPMiner
 {
-	private static final long serialVersionUID = 6L;
+	private static final long serialVersionUID = 7L;
+
+	protected boolean verbose = false;
 
 	protected List<String> endpoints;
 	protected HashMap<String, String> trainingInchisToEndpoint;
@@ -113,7 +115,8 @@ public class CFPMiner extends BasicCFPMiner
 		}
 		removeFragments(toRemove);
 
-		System.err.println("applied min freq filter: " + fragmentToCompound.size());
+		if (verbose)
+			System.out.println("CFPMiner: applied min freq filter: " + fragmentToCompound.size());
 
 	}
 
@@ -186,7 +189,8 @@ public class CFPMiner extends BasicCFPMiner
 
 		removeFragments(fragmentsToRemove);
 
-		System.err.println("applied closed fragment filter: " + fragmentToCompound.size());
+		if (verbose)
+			System.out.println("CFPMiner: applied closed fragment filter: " + fragmentToCompound.size());
 	}
 
 	public CFPFragment getNonClosed(CFPFragment f1, CFPFragment f2, Set<Integer> compounds)
@@ -289,7 +293,8 @@ public class CFPMiner extends BasicCFPMiner
 		if (fragmentToCompound.size() != hashfoldsize)
 			throw new IllegalStateException();
 
-		System.err.println("applied chi square filter: " + fragmentToCompound.size());
+		if (verbose)
+			System.out.println("CFPMiner: applied chi square filter: " + fragmentToCompound.size());
 	}
 
 	private void removeFragments(Collection<CFPFragment> fragmentToDelete)
@@ -330,7 +335,8 @@ public class CFPMiner extends BasicCFPMiner
 			fragmentToCompound_unfiltered = (LinkedHashMap<CFPFragment, LinkedHashSet<Integer>>) fragmentToCompound
 					.clone();
 
-		System.err.println("apply filtering: " + fragmentToCompound.size());
+		if (verbose)
+			System.out.println("apply filtering: " + fragmentToCompound.size());
 
 		// apply new filter
 		applyMinFreq(filterSubset, absMinFreq);
