@@ -563,43 +563,43 @@ public class DataLoader
 	private static CDKDataset createDataset(String name, List<String> smiles, List<String> endpoints,
 			List<String> warnings) throws CDKException
 	{
-		HashMap<String, HashSet<String>> inchiToActivity = new HashMap<>();
+		HashMap<String, HashSet<String>> uniqToActivity = new HashMap<>();
 		int idx = 0;
 		for (String smi : smiles)
 		{
-			String inch = CDKConverter.toInchi(smi);
-			if (!inchiToActivity.containsKey(inch))
-				inchiToActivity.put(inch, new HashSet<String>());
-			inchiToActivity.get(inch).add(endpoints.get(idx));
+			String uniq = CDKConverter.toAbsoluteSmiles(smi);
+			if (!uniqToActivity.containsKey(uniq))
+				uniqToActivity.put(uniq, new HashSet<String>());
+			uniqToActivity.get(uniq).add(endpoints.get(idx));
 			idx++;
 		}
 
 		List<String> uSmiles = new ArrayList<>();
 		List<String> uEndpoints = new ArrayList<>();
-		HashSet<String> inchiAdded = new HashSet<>();
+		HashSet<String> uniqAdded = new HashSet<>();
 		int skipEq = 0;
 		int skipDiff = 0;
 		for (int i = 0; i < smiles.size(); i++)
 		{
 			//					System.out.println(i + " " + smiles.get(i));
-			String inchi = CDKConverter.toInchi(smiles.get(i));
-			if (inchiAdded.contains(inchi))
+			String uniq = CDKConverter.toAbsoluteSmiles(smiles.get(i));
+			if (uniqAdded.contains(uniq))
 			{
 				skipEq++;
-				//						System.out.println("skip equal value duplicate: " + i + " " + inchiToActivity.get(inchi) + " "
-				//								+ smiles.get(i) + " " + inchi);
+				//						System.out.println("skip equal value duplicate: " + i + " " + uniqToActivity.get(uniq) + " "
+				//								+ smiles.get(i) + " " + uniq);
 			}
-			else if (inchiToActivity.get(inchi).size() > 1)
+			else if (uniqToActivity.get(uniq).size() > 1)
 			{
 				skipDiff++;
-				//						System.out.println("skip different value duplicate: " + i + " " + inchiToActivity.get(inchi)
-				//								+ " " + smiles.get(i) + " " + inchi);
+				//						System.out.println("skip different value duplicate: " + i + " " + uniqToActivity.get(uniq)
+				//								+ " " + smiles.get(i) + " " + uniq);
 			}
 			else
 			{
 				uSmiles.add(smiles.get(i));
 				uEndpoints.add(endpoints.get(i));
-				inchiAdded.add(inchi);
+				uniqAdded.add(uniq);
 			}
 		}
 		if (skipEq > 0)
@@ -625,7 +625,7 @@ public class DataLoader
 					&& !a.getProperty(endpoint).toString().equals("inconclusive"))
 			{
 				String smi = new SmilesGenerator().create(a);
-				smiles.add(CDKConverter.toInchi(smi));
+				smiles.add(CDKConverter.toAbsoluteSmiles(smi));
 			}
 		reader.close();
 		return CountedSet.create(smiles).getMaxCount(false) > 1;
@@ -651,13 +651,12 @@ public class DataLoader
 		List<String> smiles = new ArrayList<>();
 		CSVFile csv = FileUtil.readCSV(dataFolder + File.separator + name + ".csv");
 		for (int i = 1; i < csv.content.size(); i++)
-			smiles.add(CDKConverter.toInchi(csv.content.get(i)[0]));
+			smiles.add(CDKConverter.toAbsoluteSmiles(csv.content.get(i)[0]));
 		return CountedSet.create(smiles).getMaxCount(false) > 1;
 	}
 
 	public static Comparator<Object> CFPDataComparator = new Comparator<Object>()
 	{
-
 		@Override
 		public int compare(Object o1, Object o2)
 		{

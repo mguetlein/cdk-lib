@@ -42,6 +42,20 @@ public class CDKConverter
 		return inchi;
 	}
 
+	private static HashMap<String, String> smilesToAbsolute = new HashMap<String, String>();
+
+	public static String toAbsoluteSmiles(String smiles) throws InvalidSmilesException, CDKException
+	{
+		if (!smilesToAbsolute.containsKey(smiles))
+			smilesToAbsolute.put(smiles, toAbsoluteSmiles(parseSmiles(smiles)));
+		return smilesToAbsolute.get(smiles);
+	}
+
+	public static String toAbsoluteSmiles(IAtomContainer mol) throws CDKException
+	{
+		return SmilesGenerator.absolute().create(mol);
+	}
+
 	public static String toInchiKey(IAtomContainer mol) throws CDKException
 	{
 		return InChIGeneratorFactory.getInstance().getInChIGenerator(mol).getInchiKey();
