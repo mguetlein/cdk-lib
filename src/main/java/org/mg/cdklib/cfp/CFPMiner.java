@@ -26,7 +26,7 @@ public class CFPMiner extends BasicCFPMiner
 	protected boolean verbose = false;
 
 	protected List<String> endpoints;
-	protected HashMap<String, String> trainingInchisToEndpoint;
+	protected HashMap<String, String> trainingUniqsToEndpoint;
 
 	transient LinkedHashMap<CFPFragment, LinkedHashSet<Integer>> fragmentToCompound_unfiltered;
 	transient String[] classValues;
@@ -58,14 +58,14 @@ public class CFPMiner extends BasicCFPMiner
 
 	public void mine(List<String> smiles) throws Exception
 	{
-		trainingInchisToEndpoint = new HashMap<>();
+		trainingUniqsToEndpoint = new HashMap<>();
 		int idx = 0;
 		for (String smi : smiles)
 		{
-			String inchi = CDKConverter.toInchi(smi);
-			if (trainingInchisToEndpoint.containsKey(inchi))
+			String uniq = CDKConverter.toAbsoluteSmiles(smi);
+			if (trainingUniqsToEndpoint.containsKey(uniq))
 				throw new IllegalStateException("no duplicates allowed!");
-			trainingInchisToEndpoint.put(inchi, endpoints.get(idx));
+			trainingUniqsToEndpoint.put(uniq, endpoints.get(idx));
 			idx++;
 		}
 
@@ -74,7 +74,7 @@ public class CFPMiner extends BasicCFPMiner
 
 	public String getTrainingActivity(String smiles) throws CDKException
 	{
-		return trainingInchisToEndpoint.get(CDKConverter.toInchi(smiles));
+		return trainingUniqsToEndpoint.get(CDKConverter.toAbsoluteSmiles(smiles));
 	}
 
 	private void applyMinFreq(Set<Integer> compoundSubset, int minFreq)
