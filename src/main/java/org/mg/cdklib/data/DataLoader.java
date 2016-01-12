@@ -78,7 +78,8 @@ public class DataLoader
 		}
 	}
 
-	private static void addDatasetWeblink(String dataset, String citationKey, String citationUrl, String title)
+	private static void addDatasetWeblink(String dataset, String citationKey, String citationUrl,
+			String title)
 	{
 		Source s = new WebSource(citationKey, citationUrl, title);
 		if (!citation.containsKey(dataset))
@@ -103,19 +104,21 @@ public class DataLoader
 	private static HashMap<String, String> sdfEndpoints = new HashMap<>();
 	private static HashMap<String, HashSet<Source>> citation = new HashMap<>();
 	private static HashMap<String, String> datasetActivityDesc = new HashMap<>();
+
 	static
 	{
 		String n = null;
 
-		for (String e : new String[] { "MultiCellCall", "SingleCellCall", "Rat", "Mouse", "Hamster", "Mutagenicity",
-				"Dog_Primates" })
+		for (String e : new String[] { "MultiCellCall", "SingleCellCall", "Rat", "Mouse", "Hamster",
+				"Mutagenicity", "Dog_Primates" })
 		{
 			n = "CPDBAS_" + e;
 			sdfDatasets.put(n, "CPDBAS_v5d_1547_20Nov2008.sdf");
 			sdfEndpoints.put(n, "ActivityOutcome_CPDBAS_" + e);
 			addDatasetWeblink(n, "CPDBAS", "http://www.epa.gov/ncct/dsstox/sdf_cpdbas.html",
 					"The Carcinogenic Potency Database");
-			addDatasetCitation(n, "Gold_Supplement_2005", "http://toxsci.oxfordjournals.org/content/85/2/747.short");
+			addDatasetCitation(n, "gold_supplement_1999",
+					"http://toxsci.oxfordjournals.org/content/85/2/747.short");
 			datasetActivityDesc.put(n, "carcinogenicity");
 			datasetCategory.put(n, BALANCED_DATASETS);
 			datasetSubCategory.put(n, "CPDBAS");
@@ -124,7 +127,8 @@ public class DataLoader
 		n = "NCTRER";
 		addDatasetWeblink(n, n, "http://www.epa.gov/ncct/dsstox/sdf_nctrer.html",
 				"Estrogen Receptor Binding Database File");
-		addDatasetCitation(n, "Fang_Structure_2001", "http://pubs.acs.org/doi/abs/10.1021/tx000208y");
+		addDatasetCitation(n, "fang_structure-activity_2001",
+				"http://pubs.acs.org/doi/abs/10.1021/tx000208y");
 		datasetActivityDesc.put(n, "Estrogen receptor");
 		sdfDatasets.put(n, "NCTRER_v4b_232_15Feb2008.sdf");
 		sdfEndpoints.put(n, "ActivityOutcome_NCTRER");
@@ -136,7 +140,8 @@ public class DataLoader
 		sdfEndpoints.put(n, "Ames test categorisation");
 		addDatasetWeblink(n, n, "http://www.cheminformatics.org/datasets/bursi",
 				"4337 Structures with AMES Categorisation");
-		addDatasetCitation(n, "Kazius_Derivation_2005", "http://pubs.acs.org/doi/abs/10.1021/jm040835a");
+		addDatasetCitation(n, "kazius_derivation_2005",
+				"http://pubs.acs.org/doi/abs/10.1021/jm040835a");
 		datasetActivityDesc.put(n, "ames test mutagenicity");
 		datasetCategory.put(n, BALANCED_DATASETS);
 		datasetSubCategory.put(n, n);
@@ -145,11 +150,13 @@ public class DataLoader
 		{
 			n = "DUD_" + e;
 
-			addDatasetCitation(n, "Huang_Benchmarking_2006", "http://pubs.acs.org/doi/abs/10.1021/jm0608356");
+			addDatasetCitation(n, "huang_benchmarking_2006",
+					"http://pubs.acs.org/doi/abs/10.1021/jm0608356");
 			addDatasetWeblink(n, "DUD", "http://dud.docking.org", "Directory of Useful Decoys");
-			addDatasetCitation(n, "Riniker_Heterogeneous_2013", "http://pubs.acs.org/doi/abs/10.1021/ci400466r");
-			addDatasetWeblink(n, "Benchmarking-Platform", "https://github.com/rdkit/benchmarking_platform",
-					"Benchmarking Platform");
+			addDatasetCitation(n, "riniker_heterogeneous_2013",
+					"http://pubs.acs.org/doi/abs/10.1021/ci400466r");
+			addDatasetWeblink(n, "Benchmarking-Platform",
+					"https://github.com/rdkit/benchmarking_platform", "Benchmarking Platform");
 			if (e.equals("cdk2"))
 				datasetActivityDesc.put(n, "cyclin-dependent kinase");
 			else if (e.equals("hivrt"))
@@ -162,16 +169,18 @@ public class DataLoader
 			datasetSubCategory.put(n, "DUD");
 		}
 
-		for (Integer i : new Integer[] { 51, 11140, 259, 10434, 10378, 12911, 100, 87, 93, 19905, 61, 12261, 25, 11365,
-				100579, 11359, 165, 8, 121, 107, 219, 108, 12670, 104, 105, 114, 13001, 11575, 11534, 52, 10193, 130,
-				12252, 17045, 10188, 10498, 10280, 11489, 12209, 10260, 12952, 10980, 90, 36, 65, 43, 11631, 72, 15,
-				126 })
+		for (Integer i : new Integer[] { 51, 11140, 259, 10434, 10378, 12911, 100, 87, 93, 19905,
+				61, 12261, 25, 11365, 100579, 11359, 165, 8, 121, 107, 219, 108, 12670, 104, 105,
+				114, 13001, 11575, 11534, 52, 10193, 130, 12252, 17045, 10188, 10498, 10280, 11489,
+				12209, 10260, 12952, 10980, 90, 36, 65, 43, 11631, 72, 15, 126 })
 		{
 			n = "ChEMBL_" + i;
-			addDatasetCitation(n, "Heikamp_Large_2011", "http://pubs.acs.org/doi/abs/10.1021/ci200199u");
-			addDatasetCitation(n, "Riniker_Heterogeneous_2013", "http://pubs.acs.org/doi/abs/10.1021/ci400466r");
-			addDatasetWeblink(n, "Benchmarking-Platform", "https://github.com/rdkit/benchmarking_platform",
-					"Benchmarking Platform");
+			addDatasetCitation(n, "heikamp_large-scale_2011",
+					"http://pubs.acs.org/doi/abs/10.1021/ci200199u");
+			addDatasetCitation(n, "riniker_heterogeneous_2013",
+					"http://pubs.acs.org/doi/abs/10.1021/ci400466r");
+			addDatasetWeblink(n, "Benchmarking-Platform",
+					"https://github.com/rdkit/benchmarking_platform", "Benchmarking Platform");
 			datasetCategory.put(n, VS_DATASETS);
 			datasetSubCategory.put(n, "ChEMBL");
 		}
@@ -199,7 +208,8 @@ public class DataLoader
 		datasetActivityDesc.put("ChEMBL_" + 10582, "cytosolic phospholipase A2");
 		datasetActivityDesc.put("ChEMBL_" + 100862, "metastin receptor");
 		datasetActivityDesc.put("ChEMBL_" + 117, "somatostatin receptor 2");
-		datasetActivityDesc.put("ChEMBL_" + 4, "voltage-gated T-type calcium channel alpha-1H subunit");
+		datasetActivityDesc.put("ChEMBL_" + 4,
+				"voltage-gated T-type calcium channel alpha-1H subunit");
 		datasetActivityDesc.put("ChEMBL_" + 11635, "protein kinase C alpha");
 		datasetActivityDesc.put("ChEMBL_" + 11242, "Focal adhesion kinase 1");
 		datasetActivityDesc.put("ChEMBL_" + 34, "fibronectin receptor beta");
@@ -277,7 +287,8 @@ public class DataLoader
 		datasetActivityDesc.put("ChEMBL_" + 100126, "serine/threonine-protein kinase B-raf");
 		datasetActivityDesc.put("ChEMBL_" + 10378, "cathepsin B");
 		datasetActivityDesc.put("ChEMBL_" + 10417, "P2X purinoceptor 7");
-		datasetActivityDesc.put("ChEMBL_" + 10752, "inhibitor of nuclear factor kappa B kinase beta subunit");
+		datasetActivityDesc.put("ChEMBL_" + 10752,
+				"inhibitor of nuclear factor kappa B kinase beta subunit");
 		datasetActivityDesc.put("ChEMBL_" + 10773, "interleukin-8 receptor B");
 		datasetActivityDesc.put("ChEMBL_" + 11631, "sphingosine 1-phosphate receptor Edg-1");
 		datasetActivityDesc.put("ChEMBL_" + 10927, "urotensin II receptor");
@@ -287,15 +298,18 @@ public class DataLoader
 		datasetActivityDesc.put("ChEMBL_" + 11488, "estradiol 17-beta-dehydrogenase 3");
 		datasetActivityDesc.put("ChEMBL_" + 12840, "macrophage colony stimulating factor receptor");
 
-		for (Integer i : new Integer[] { 644, 713, 859, 737, 852, 692, 652, 689, 712, 600, 466, 832, 858, 810, 733, 548 })
+		for (Integer i : new Integer[] { 644, 713, 859, 737, 852, 692, 652, 689, 712, 600, 466, 832,
+				858, 810, 733, 548 })
 		{
 			n = "MUV_" + i;
-			addDatasetCitation(n, "Rohrer_Maximum_2009", "http://pubs.acs.org/doi/abs/10.1021/ci8002649");
+			addDatasetCitation(n, "rohrer_maximum_2009",
+					"http://pubs.acs.org/doi/abs/10.1021/ci8002649");
 			addDatasetWeblink(n, "MUV", "http://www.pharmchem.tu-bs.de/lehre/baumann/MUV.html",
 					"Maximum Unbiased Validation (MUV) Datasets for Virtual Screening");
-			addDatasetCitation(n, "Riniker_Heterogeneous_2013", "http://pubs.acs.org/doi/abs/10.1021/ci400466r");
-			addDatasetWeblink(n, "Benchmarking-Platform", "https://github.com/rdkit/benchmarking_platform",
-					"Benchmarking Platform");
+			addDatasetCitation(n, "riniker_heterogeneous_2013",
+					"http://pubs.acs.org/doi/abs/10.1021/ci400466r");
+			addDatasetWeblink(n, "Benchmarking-Platform",
+					"https://github.com/rdkit/benchmarking_platform", "Benchmarking Platform");
 			datasetCategory.put(n, VS_DATASETS);
 			datasetSubCategory.put(n, "MUV");
 		}
@@ -371,7 +385,7 @@ public class DataLoader
 		{
 			int rIdx = set.addResult();
 			set.setResultValue(rIdx, "category", datasetCategory.get(n));
-			set.setResultValue(rIdx, "name", n.replaceAll("_", " "));
+			set.setResultValue(rIdx, "name", n);//.replaceAll("_", " "));
 			CDKDataset d = getDataset(n);
 			String classV[] = getClassValues(d.endpoints);
 			int activeIdx = getActiveIdx(classV);
@@ -386,7 +400,8 @@ public class DataLoader
 			//			set.setResultValue(rIdx, "dataset-weblink", CollectionUtil.toString(datasetWeblinks.get(n)));
 			String cit = "\\cite{";
 			for (Source s : citation.get(n))
-				cit += s.citationKey + ",";
+				if (!(s instanceof WebSource))
+					cit += s.citationKey + ",";
 			cit = cit.substring(0, cit.length() - 1) + "}";
 			set.setResultValue(rIdx, "source", cit);
 		}
@@ -405,29 +420,32 @@ public class DataLoader
 		else
 			set = ResultSetIO.parseFromTxtFile(f);
 
-		int idx = 0;
-		for (String n : name)
+		for (int idx = 0; idx < set.getNumResults(); idx++)
 		{
+			String n = set.getResultValue(idx, "name").toString();
 			set.setResultValue(idx, "category", datasetCategory.get(n));
 			set.setResultValue(idx, "subCategory", datasetSubCategory.get(n));
 			set.setResultValue(idx, "numDatasets", "1");
-			idx++;
 		}
+
 		List<String> props = new ArrayList<>(set.getProperties());
 		props.add(1, props.remove(props.size() - 1));
 		props.add(1, props.remove(props.size() - 1));
 		set.sortProperties(props);
-		set = set.join(new String[] { "category", "subCategory", "source" }, new String[] { "name", "target" }, null);
+		set = set.join(new String[] { "category", "subCategory", "source" },
+				new String[] { "name", "target" }, null);
 
 		//		System.out.println(set.toNiceString());
 
 		for (int i = 0; i < set.getNumResults(); i++)
 		{
-			set.setResultValue(i, "numDatasets", set.getResultValue(i, "numDatasets").toString().split("/").length);
+			set.setResultValue(i, "numDatasets",
+					set.getResultValue(i, "numDatasets").toString().split("/").length);
 			for (String p : new String[] { "size", "active", "in-active" })
 				if (((Integer) set.getResultValue(i, "numDatasets")) > 1)
 				{
-					String mean = new DecimalFormat("#.#").format((Double) set.getResultValue(i, p));
+					String mean = new DecimalFormat("#.#")
+							.format((Double) set.getResultValue(i, p));
 					//					if (!mean.contains("."))
 					//						mean += ".0";
 					set.setResultValue(i, p, mean);
@@ -513,8 +531,8 @@ public class DataLoader
 		List<String> endpoints = new ArrayList<>();
 		List<String> smiles = new ArrayList<>();
 
-		ISimpleChemObjectReader reader = new ReaderFactory().createReader(new InputStreamReader(new FileInputStream(
-				dataFolder + File.separator + sdfDatasets.get(name))));
+		ISimpleChemObjectReader reader = new ReaderFactory().createReader(new InputStreamReader(
+				new FileInputStream(dataFolder + File.separator + sdfDatasets.get(name))));
 		IChemFile content = (IChemFile) reader.read((IChemObject) new ChemFile());
 		String endpoint = sdfEndpoints.get(name);
 		int invalidCompound = 0;
@@ -523,7 +541,8 @@ public class DataLoader
 		{
 			if (a.getAtomCount() == 0)
 				invalidCompound++;
-			else if (a.getProperty(endpoint) == null || a.getProperty(endpoint).toString().equals("unspecified")
+			else if (a.getProperty(endpoint) == null
+					|| a.getProperty(endpoint).toString().equals("unspecified")
 					|| a.getProperty(endpoint).toString().equals("blank")
 					|| a.getProperty(endpoint).toString().equals("inconclusive"))
 				missingEndpoint++;
@@ -553,15 +572,17 @@ public class DataLoader
 
 		List<String> warnings = new ArrayList<>();
 		if (invalidCompound > 0)
-			warnings.add("Removed " + invalidCompound + " compounds that could not be read by the CDK library.");
+			warnings.add("Removed " + invalidCompound
+					+ " compounds that could not be read by the CDK library.");
 		if (missingEndpoint > 0)
-			warnings.add("Removed " + missingEndpoint + " compounds with missing/invalid enpoint values.");
+			warnings.add("Removed " + missingEndpoint
+					+ " compounds with missing/invalid enpoint values.");
 
 		return createDataset(name, smiles, endpoints, warnings);
 	}
 
-	private static CDKDataset createDataset(String name, List<String> smiles, List<String> endpoints,
-			List<String> warnings) throws CDKException
+	private static CDKDataset createDataset(String name, List<String> smiles,
+			List<String> endpoints, List<String> warnings) throws CDKException
 	{
 		HashMap<String, HashSet<String>> uniqToActivity = new HashMap<>();
 		int idx = 0;
@@ -603,7 +624,8 @@ public class DataLoader
 			}
 		}
 		if (skipEq > 0)
-			warnings.add("Removed " + skipEq + " duplicate occurences of compounds (with equal endpoint values).");
+			warnings.add("Removed " + skipEq
+					+ " duplicate occurences of compounds (with equal endpoint values).");
 		if (skipDiff > 0)
 			warnings.add("Removed " + skipDiff
 					+ " compounds that occured multiple times with different endpoint values.");
@@ -614,8 +636,8 @@ public class DataLoader
 	private boolean hasDuplicatesSDF(String name) throws Exception
 	{
 		List<String> smiles = new ArrayList<>();
-		ISimpleChemObjectReader reader = new ReaderFactory().createReader(new InputStreamReader(new FileInputStream(
-				dataFolder + File.separator + sdfDatasets.get(name))));
+		ISimpleChemObjectReader reader = new ReaderFactory().createReader(new InputStreamReader(
+				new FileInputStream(dataFolder + File.separator + sdfDatasets.get(name))));
 		IChemFile content = (IChemFile) reader.read((IChemObject) new ChemFile());
 		String endpoint = sdfEndpoints.get(name);
 		for (IAtomContainer a : ChemFileManipulator.getAllAtomContainers(content))
@@ -679,25 +701,26 @@ public class DataLoader
 
 	public static void main(String[] args)
 	{
-		DataLoader d = new DataLoader("data");
-		//		d.getInfo("NCTRER", "CPDBAS_Rat", "ChEMBL_61", "DUD_vegfr2", "DUD_hivrt", "DUD_cdk2", "MUV_644", "MUV_713",
-		//				"MUV_859", "AMES");
-		String data[] = d.allDatasets();
-		Arrays.sort(data, CFPDataComparator);
-		System.out.println(ArrayUtil.toString(data));
-		//data = new String[] { "NCTRER" };
-		for (String dat : data)
-		{
-			CDKDataset da = d.getDataset(dat);
-			if (!da.warnings.isEmpty())
-			{
-				System.out.println(dat + " Warnings:");
-				for (String warn : da.warnings)
-					System.out.println("* " + warn);
-				System.out.println();
-			}
-		}
+		DataLoader d = new DataLoader("../CFPMiner/data");
+		System.out.println(d.getCategoryInfo(d.allDatasets()).toLatexTable());
 
+		//		//		d.getInfo("NCTRER", "CPDBAS_Rat", "ChEMBL_61", "DUD_vegfr2", "DUD_hivrt", "DUD_cdk2", "MUV_644", "MUV_713",
+		//		//				"MUV_859", "AMES");
+		//		String data[] = d.allDatasets();
+		//		Arrays.sort(data, CFPDataComparator);
+		//		System.out.println(ArrayUtil.toString(data));
+		//		//data = new String[] { "NCTRER" };
+		//		for (String dat : data)
+		//		{
+		//			CDKDataset da = d.getDataset(dat);
+		//			if (!da.warnings.isEmpty())
+		//			{
+		//				System.out.println(dat + " Warnings:");
+		//				for (String warn : da.warnings)
+		//					System.out.println("* " + warn);
+		//				System.out.println();
+		//			}
+		//		}
 	}
 
 	public static String[] getClassValues(List<String> endpoints)
@@ -711,7 +734,8 @@ public class DataLoader
 	{
 		Integer activeIdx = null;
 		for (int i = 0; i < classValues.length; i++)
-			if (classValues[i].equals("active") || classValues[i].equals("mutagen") || classValues[i].equals("1"))
+			if (classValues[i].equals("active") || classValues[i].equals("mutagen")
+					|| classValues[i].equals("1"))
 				activeIdx = i;
 		if (activeIdx == null)
 			throw new IllegalStateException("what is active? " + ArrayUtil.toString(classValues));
