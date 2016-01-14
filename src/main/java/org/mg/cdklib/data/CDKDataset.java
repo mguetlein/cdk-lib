@@ -14,7 +14,8 @@ public class CDKDataset implements Serializable
 	protected List<String> endpoints;
 	protected List<String> warnings;
 
-	public CDKDataset(String datasetName, List<String> smiles, List<String> endpoints, List<String> warnings)
+	public CDKDataset(String datasetName, List<String> smiles, List<String> endpoints,
+			List<String> warnings)
 	{
 		this.smiles = smiles;
 		this.datasetName = datasetName;
@@ -55,6 +56,6 @@ public class CDKDataset implements Serializable
 				&& ((CDKDataset) obj).getSmiles().equals(smiles) //
 				&& ((CDKDataset) obj).getDatasetName().equals(datasetName) //
 				&& ((CDKDataset) obj).getEndpoints().equals(endpoints) //
-		&& ((CDKDataset) obj).getWarnings().equals(warnings));
+				&& ((CDKDataset) obj).getWarnings().equals(warnings));
 	}
 }

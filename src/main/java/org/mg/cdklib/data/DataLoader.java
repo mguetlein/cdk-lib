@@ -46,7 +46,7 @@ public class DataLoader
 		{
 			String s[] = citationKey.split("_");
 			if (s.length > 2)
-				return s[0] + " (" + ArrayUtil.last(s) + ")";
+				return s[0].toUpperCase() + " (" + ArrayUtil.last(s) + ")";
 			else
 				return s[0];
 		}
@@ -115,7 +115,7 @@ public class DataLoader
 			n = "CPDBAS_" + e;
 			sdfDatasets.put(n, "CPDBAS_v5d_1547_20Nov2008.sdf");
 			sdfEndpoints.put(n, "ActivityOutcome_CPDBAS_" + e);
-			addDatasetWeblink(n, "CPDBAS", "http://www.epa.gov/ncct/dsstox/sdf_cpdbas.html",
+			addDatasetWeblink(n, "EPA", "http://www.epa.gov/ncct/dsstox/sdf_cpdbas.html",
 					"The Carcinogenic Potency Database");
 			addDatasetCitation(n, "gold_supplement_1999",
 					"http://toxsci.oxfordjournals.org/content/85/2/747.short");
@@ -125,7 +125,7 @@ public class DataLoader
 		}
 
 		n = "NCTRER";
-		addDatasetWeblink(n, n, "http://www.epa.gov/ncct/dsstox/sdf_nctrer.html",
+		addDatasetWeblink(n, "EPA", "http://www.epa.gov/ncct/dsstox/sdf_nctrer.html",
 				"Estrogen Receptor Binding Database File");
 		addDatasetCitation(n, "fang_structure-activity_2001",
 				"http://pubs.acs.org/doi/abs/10.1021/tx000208y");
@@ -138,7 +138,7 @@ public class DataLoader
 		n = "AMES";
 		sdfDatasets.put(n, "cas_4337.ob.noH.sdf");
 		sdfEndpoints.put(n, "Ames test categorisation");
-		addDatasetWeblink(n, n, "http://www.cheminformatics.org/datasets/bursi",
+		addDatasetWeblink(n, "SD-File", "http://www.cheminformatics.org/datasets/bursi",
 				"4337 Structures with AMES Categorisation");
 		addDatasetCitation(n, "kazius_derivation_2005",
 				"http://pubs.acs.org/doi/abs/10.1021/jm040835a");
@@ -152,7 +152,8 @@ public class DataLoader
 
 			addDatasetCitation(n, "huang_benchmarking_2006",
 					"http://pubs.acs.org/doi/abs/10.1021/jm0608356");
-			addDatasetWeblink(n, "DUD", "http://dud.docking.org", "Directory of Useful Decoys");
+			addDatasetWeblink(n, "DUD-Directory", "http://dud.docking.org",
+					"Directory of Useful Decoys");
 			addDatasetCitation(n, "riniker_heterogeneous_2013",
 					"http://pubs.acs.org/doi/abs/10.1021/ci400466r");
 			addDatasetWeblink(n, "Benchmarking-Platform",
@@ -304,7 +305,8 @@ public class DataLoader
 			n = "MUV_" + i;
 			addDatasetCitation(n, "rohrer_maximum_2009",
 					"http://pubs.acs.org/doi/abs/10.1021/ci8002649");
-			addDatasetWeblink(n, "MUV", "http://www.pharmchem.tu-bs.de/lehre/baumann/MUV.html",
+			addDatasetWeblink(n, "MUV-Datasets",
+					"http://www.pharmchem.tu-bs.de/lehre/baumann/MUV.html",
 					"Maximum Unbiased Validation (MUV) Datasets for Virtual Screening");
 			addDatasetCitation(n, "riniker_heterogeneous_2013",
 					"http://pubs.acs.org/doi/abs/10.1021/ci400466r");
@@ -356,6 +358,13 @@ public class DataLoader
 	public String[] allDatasets()
 	{
 		return FileUtil.readStringFromFile(dataFolder + "/endpoints.txt").split("\n");
+	}
+
+	public String[] allDatasetsSorted()
+	{
+		String[] s = FileUtil.readStringFromFile(dataFolder + "/endpoints.txt").split("\n");
+		Arrays.sort(s, CFPDataComparator);
+		return s;
 	}
 
 	public DataLoader(String dataFolder)
