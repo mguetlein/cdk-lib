@@ -25,7 +25,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class BasicCFPMiner implements Serializable
 {
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	protected int numCompounds = 0;
 	protected List<String> trainingDataSmiles;
@@ -40,9 +40,14 @@ public class BasicCFPMiner implements Serializable
 	transient CircularFingerprinter fp;
 	transient CFPFragment[] fragmentList;
 	transient HashMap<Integer, LinkedHashSet<CFPFragment>> compoundToFragment;
+	transient HashMap<CFPFragment, Integer> fragmentToIdx = new HashMap<CFPFragment, Integer>();
 	transient HashMap<CFPFragment, Integer> fragmentToIteration = new HashMap<CFPFragment, Integer>();
 	transient HashMap<CFPFragment, Integer> fragmentToNumAtoms = new HashMap<CFPFragment, Integer>();
 	transient HashMap<IAtomContainer, LinkedHashSet<CFPFragment>> testMoleculeToFragment;
+
+	transient HashMap<CFPFragment, LinkedHashSet<CFPFragment>> subFragments;
+	transient HashMap<CFPFragment, LinkedHashSet<CFPFragment>> superFragments;
+
 	transient private HashMap<Integer, Set<Integer>> collisionMap;
 
 	public BasicCFPMiner()
@@ -97,8 +102,8 @@ public class BasicCFPMiner implements Serializable
 	public boolean isFragmentIncludedInCompound(int compound, CFPFragment fragment)
 	{
 		if (fragmentToCompound.get(fragment) == null)
-			throw new IllegalStateException("no compounds for fragment, should have been removed! " + fragment + " "
-					+ fragmentToCompound.get(fragment));
+			throw new IllegalStateException("no compounds for fragment, should have been removed! "
+					+ fragment + " " + fragmentToCompound.get(fragment));
 		return (fragmentToCompound.get(fragment).contains(compound));
 	}
 
@@ -279,12 +284,81 @@ public class BasicCFPMiner implements Serializable
 		return fragmentList[fragmentIdx];
 	}
 
+	public Integer getIdxForFragment(CFPFragment frag)
+	{
+		if (fragmentToIdx == null)
+		{
+			fragmentToIdx = new HashMap<>();
+			int idx = 0;
+			for (CFPFragment h : fragmentToCompound.keySet())
+				fragmentToIdx.put(h, idx++);
+		}
+		return fragmentToIdx.get(frag);
+	}
+
+	public Set<CFPFragment> getSubFragments(CFPFragment frag) throws Exception
+	{
+		if (subFragments == null)
+			mineSubAndSuperFragments();
+		return subFragments.get(frag);
+	}
+
+	public Set<CFPFragment> getSuperFragments(CFPFragment frag) throws Exception
+	{
+		if (superFragments == null)
+			mineSubAndSuperFragments();
+		return superFragments.get(frag);
+	}
+
+	private void mineSubAndSuperFragments() throws Exception
+	{
+		if (subFragments != null)
+			throw new IllegalArgumentException();
+		subFragments = new HashMap<CFPFragment, LinkedHashSet<CFPFragment>>();
+		superFragments = new HashMap<CFPFragment, LinkedHashSet<CFPFragment>>();
+
+		for (int i = 0; i < getNumFragments() - 1; i++)
+		{
+			CFPFragment f1 = getFragmentViaIdx(i);
+			Integer mol = getCompoundsForFragment(f1).iterator().next();
+			IAtomContainer molC = CDKConverter.parseSmiles(trainingDataSmiles.get(mol));
+			Set<Integer> atoms1 = getAtomsMultiple(molC, f1);
+
+			for (CFPFragment f2 : getFragmentsForCompound(mol))
+			{
+				if (f1.equals(f2))
+					continue;
+				Set<Integer> atoms2 = getAtomsMultiple(molC, f2);
+				if (SetUtil.isSubSet(atoms1, atoms2))
+				{
+					insert(subFragments, f1, f2);
+					insert(superFragments, f2, f1);
+				}
+			}
+		}
+		//		System.out.println("mined sub and super");
+		//		for (int i = 0; i < getNumFragments() - 1; i++)
+		//		{
+		//			System.out.println("\n\n" + (i + 1));
+		//			System.out.println("sub fragments:");
+		//			if (subFragments.get(getFragmentViaIdx(i)) != null)
+		//				for (CFPFragment f : subFragments.get(getFragmentViaIdx(i)))
+		//					System.out.print((getIdxForFragment(f) + 1) + " ");
+		//			System.out.println("\nsuper fragments:");
+		//			if (superFragments.get(getFragmentViaIdx(i)) != null)
+		//				for (CFPFragment f : superFragments.get(getFragmentViaIdx(i)))
+		//					System.out.print((getIdxForFragment(f) + 1) + " ");
+		//		}
+		//		System.out.println("\n");
+	}
+
 	public LinkedHashSet<CFPFragment> getFragmentsForTestCompound(String smiles) throws Exception
 	{
 		return getFragmentsForTestCompound(CDKConverter.parseSmiles(smiles));
 	}
 
-	public LinkedHashSet<CFPFragment> getFragmentsForTestCompound(IAtomContainer testMol) throws CDKException
+	public LinkedHashSet<CFPFragment> getFragmentsForTestCompound(IAtomContainer testMol)
+			throws CDKException
 	{
 		if (testMoleculeToFragment == null)
 			testMoleculeToFragment = new HashMap<IAtomContainer, LinkedHashSet<CFPFragment>>();
@@ -315,7 +389,8 @@ public class BasicCFPMiner implements Serializable
 		f.absMinFreq = absMinFreq;
 		f.numCompounds = numCompounds;
 		for (CFPFragment frag : fragmentToCompound.keySet())
-			f.fragmentToCompound.put(frag, (LinkedHashSet<Integer>) fragmentToCompound.get(frag).clone());
+			f.fragmentToCompound.put(frag,
+					(LinkedHashSet<Integer>) fragmentToCompound.get(frag).clone());
 		return f;
 	}
 
@@ -335,7 +410,8 @@ public class BasicCFPMiner implements Serializable
 		if (!nice)
 			set.setResultValue(idx, "Num compounds", numCompounds);
 		set.setResultValue(idx, "Fragment type", nice ? type.toNiceString() : type);
-		set.setResultValue(idx, "Feature selection", nice ? featureSelection.toNiceString() : featureSelection);
+		set.setResultValue(idx, "Feature selection",
+				nice ? featureSelection.toNiceString() : featureSelection);
 		//		if (featureSelection == FeatureSelection.filter)
 		//		{
 		//			set.setResultValue(idx, "Min frequency (relative/absolute)",
@@ -368,7 +444,8 @@ public class BasicCFPMiner implements Serializable
 			List<Integer> numFragments = new ArrayList<>();
 			for (int c = 0; c < numCompounds; c++)
 				numFragments.add(getFragmentsForCompound(c).size());
-			set.setResultValue(idx, "mean fragments per compound", DoubleArraySummary.create(numFragments));
+			set.setResultValue(idx, "mean fragments per compound",
+					DoubleArraySummary.create(numFragments));
 
 			if (featureSelection == FeatureSelection.fold)
 			{

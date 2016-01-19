@@ -21,7 +21,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class CFPMiner extends BasicCFPMiner
 {
-	private static final long serialVersionUID = 7L;
+	private static final long serialVersionUID = 8L;
 
 	protected boolean verbose = false;
 
@@ -93,7 +93,8 @@ public class CFPMiner extends BasicCFPMiner
 		// collect tuples of hash code and min-freq
 		List<int[]> hf = new ArrayList<int[]>();
 		for (CFPFragment f : fragmentToCompound.keySet())
-			hf.add(new int[] { f.getId(), SetUtil.intersectSize(fragmentToCompound.get(f), compoundSubset) });
+			hf.add(new int[] { f.getId(),
+					SetUtil.intersectSize(fragmentToCompound.get(f), compoundSubset) });
 
 		// sort according to min freq, in decreasing order
 		Collections.sort(hf, new Comparator<int[]>()
@@ -171,7 +172,8 @@ public class CFPMiner extends BasicCFPMiner
 
 					if (fragmentToCompoundSubset.get(f1).equals(fragmentToCompoundSubset.get(f2)))
 					{
-						CFPFragment obsolete = getNonClosed(f1, f2, fragmentToCompoundSubset.get(f1));
+						CFPFragment obsolete = getNonClosed(f1, f2,
+								fragmentToCompoundSubset.get(f1));
 						if (obsolete != null)
 						{
 							fragmentsToRemove.add(obsolete);
@@ -190,7 +192,8 @@ public class CFPMiner extends BasicCFPMiner
 		removeFragments(fragmentsToRemove);
 
 		if (verbose)
-			System.out.println("CFPMiner: applied closed fragment filter: " + fragmentToCompound.size());
+			System.out.println(
+					"CFPMiner: applied closed fragment filter: " + fragmentToCompound.size());
 	}
 
 	public CFPFragment getNonClosed(CFPFragment f1, CFPFragment f2, Set<Integer> compounds)
