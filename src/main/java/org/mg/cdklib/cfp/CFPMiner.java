@@ -324,7 +324,11 @@ public class CFPMiner extends BasicCFPMiner
 	public void applyFilter(Set<Integer> filterSubset)
 	{
 		if (featureSelection != FeatureSelection.filt)
-			return;
+			throw new IllegalArgumentException();
+		if (fragmentToCompound.size() <= hashfoldsize)
+			throw new IllegalArgumentException("cannot apply filter with hashfoldsize: "
+					+ hashfoldsize + ", num fragments is only: " + fragmentToCompound.size()
+					+ ", disable filtering or reduce hashfoldsize!");
 
 		// undo old filter
 		if (fragmentToCompound_unfiltered != null)

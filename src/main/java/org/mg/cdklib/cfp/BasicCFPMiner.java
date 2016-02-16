@@ -25,7 +25,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class BasicCFPMiner implements Serializable
 {
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 
 	protected int numCompounds = 0;
 	protected List<String> trainingDataSmiles;
@@ -48,7 +48,7 @@ public class BasicCFPMiner implements Serializable
 	transient HashMap<CFPFragment, LinkedHashSet<CFPFragment>> subFragments;
 	transient HashMap<CFPFragment, LinkedHashSet<CFPFragment>> superFragments;
 
-	transient private HashMap<Integer, Set<Integer>> collisionMap;
+	private HashMap<Integer, Set<Integer>> collisionMap;
 
 	public BasicCFPMiner()
 	{

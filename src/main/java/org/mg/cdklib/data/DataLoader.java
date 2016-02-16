@@ -18,10 +18,12 @@ import java.util.Set;
 import org.mg.cdklib.CDKConverter;
 import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.datamining.ResultSetIO;
+import org.mg.javalib.io.KeyValueFileStore;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.FileUtil;
 import org.mg.javalib.util.FileUtil.CSVFile;
+import org.mg.javalib.util.ListUtil;
 import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
@@ -110,7 +112,7 @@ public class DataLoader
 		String n = null;
 
 		for (String e : new String[] { "MultiCellCall", "SingleCellCall", "Rat", "Mouse", "Hamster",
-				"Mutagenicity", "Dog_Primates" })
+				"Mutagenicity" }) //"Dog_Primates"
 		{
 			n = "CPDBAS_" + e;
 			sdfDatasets.put(n, "CPDBAS_v5d_1547_20Nov2008.sdf");
@@ -355,6 +357,11 @@ public class DataLoader
 		}
 	}
 
+	public String[] reducedDatasets()
+	{
+		return FileUtil.readStringFromFile(dataFolder + "/endpoints_reduced.txt").split("\n");
+	}
+
 	public String[] allDatasets()
 	{
 		return FileUtil.readStringFromFile(dataFolder + "/endpoints.txt").split("\n");
@@ -365,6 +372,52 @@ public class DataLoader
 		String[] s = FileUtil.readStringFromFile(dataFolder + "/endpoints.txt").split("\n");
 		Arrays.sort(s, CFPDataComparator);
 		return s;
+	}
+
+	public String[] cpdbDatasets()
+	{
+		return filteredDatasets("CPDB");
+	}
+
+	public String[] chemblDatasets()
+	{
+		return filteredDatasets("ChEMBL");
+	}
+
+	public String[] muvDatasets()
+	{
+		return filteredDatasets("MUV");
+	}
+
+	public String[] dudDatasets()
+	{
+		return filteredDatasets("DUD");
+	}
+
+	public String[] filteredDatasets(final String prefix)
+	{
+		String[] s = FileUtil.readStringFromFile(dataFolder + "/endpoints.txt").split("\n");
+		return ArrayUtil.filter(String.class, s, new ListUtil.Filter<String>()
+		{
+			@Override
+			public boolean accept(String s)
+			{
+				return s.startsWith(prefix);
+			}
+		});
+	}
+
+	public String[] balancedDatasets()
+	{
+		String[] s = FileUtil.readStringFromFile(dataFolder + "/endpoints.txt").split("\n");
+		return ArrayUtil.filter(String.class, s, new ListUtil.Filter<String>()
+		{
+			@Override
+			public boolean accept(String s)
+			{
+				return datasetCategory.get(s) == BALANCED_DATASETS;
+			}
+		});
 	}
 
 	public DataLoader(String dataFolder)
@@ -381,17 +434,14 @@ public class DataLoader
 	//		return new File(dataFolder + File.separator + name + ".csv").exists();
 	//	}
 
-	public CDKDataset getDataset(String id)
-	{
-		return getDataset(id, null);
-	}
-
 	public ResultSet getInfo(String... ids)
 	{
 		ResultSet set = new ResultSet();
 		set.setNicePropery("size", "compounds");
 		for (String n : ids)
 		{
+			System.out.println(n);
+
 			int rIdx = set.addResult();
 			set.setResultValue(rIdx, "category", datasetCategory.get(n));
 			set.setResultValue(rIdx, "name", n);//.replaceAll("_", " "));
@@ -478,28 +528,34 @@ public class DataLoader
 		this.resampleDecoys = resampleDecoys;
 	}
 
-	public CDKDataset getDataset(String name, Integer run)
+	@Deprecated
+	public CDKDataset getDataset(String name, int run)
 	{
-		if (run == null)
-			run = 1;
-		if (sdfDatasets.containsKey(name))
-			run = null;
-		if (run != null)
-		{
-			if (!resampleDecoys)
-				run = 1;
-			name = name + "_r" + String.format("%02d", run);
-		}
+		return getDataset(name);
+	}
 
+	KeyValueFileStore<String, CDKDataset> parsedDatasets;
+
+	public CDKDataset getDataset(String name)
+	{
 		if (!datasets.containsKey(name))
 		{
 			try
 			{
+				if (parsedDatasets == null)
+					parsedDatasets = new KeyValueFileStore<>(dataFolder + "/parsed", false, true,
+							null, true);
 				CDKDataset data;
-				if (sdfDatasets.containsKey(name))
-					data = getDatasetFromSDF(name);
+				if (!parsedDatasets.contains(name))
+				{
+					if (sdfDatasets.containsKey(name))
+						data = getDatasetFromSDF(name);
+					else
+						data = getDatasetFromCSV(name);
+					parsedDatasets.store(name, data);
+				}
 				else
-					data = getDatasetFromCSV(name);
+					data = parsedDatasets.get(name);
 				datasets.put(name, data);
 			}
 			catch (Exception e)
@@ -606,30 +662,32 @@ public class DataLoader
 
 		List<String> uSmiles = new ArrayList<>();
 		List<String> uEndpoints = new ArrayList<>();
-		HashSet<String> uniqAdded = new HashSet<>();
+		HashMap<String, Integer> uniqAdded = new HashMap<>();
 		int skipEq = 0;
 		int skipDiff = 0;
 		for (int i = 0; i < smiles.size(); i++)
 		{
 			//					System.out.println(i + " " + smiles.get(i));
 			String uniq = CDKConverter.toAbsoluteSmiles(smiles.get(i));
-			if (uniqAdded.contains(uniq))
+			if (uniqAdded.containsKey(uniq))
 			{
 				skipEq++;
-				//						System.out.println("skip equal value duplicate: " + i + " " + uniqToActivity.get(uniq) + " "
-				//								+ smiles.get(i) + " " + uniq);
+				System.err.println("createDataset> skip equal value " + uniqToActivity.get(uniq)
+						+ " duplicate " + uniq + ":\n" + i + " " + smiles.get(i)
+						+ "\nis equal to:\n" + uniqAdded.get(uniq) + " "
+						+ smiles.get(uniqAdded.get(uniq)));
 			}
 			else if (uniqToActivity.get(uniq).size() > 1)
 			{
 				skipDiff++;
-				//						System.out.println("skip different value duplicate: " + i + " " + uniqToActivity.get(uniq)
-				//								+ " " + smiles.get(i) + " " + uniq);
+				System.out.println("createDataset> skip different value duplicate: " + i + " "
+						+ uniqToActivity.get(uniq) + " " + smiles.get(i) + " " + uniq);
 			}
 			else
 			{
 				uSmiles.add(smiles.get(i));
 				uEndpoints.add(endpoints.get(i));
-				uniqAdded.add(uniq);
+				uniqAdded.put(uniq, i);
 			}
 		}
 		if (skipEq > 0)
@@ -788,6 +846,11 @@ public class DataLoader
 			if (datasetSubCategory.get(s).equals(category))
 				datasets.add(s);
 		return datasets;
+	}
+
+	public boolean isVirtualScreeningDataset(String name)
+	{
+		return datasetCategory.get(name) == VS_DATASETS;
 	}
 
 }
