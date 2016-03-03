@@ -1,29 +1,39 @@
 package org.mg.cdklib;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 
+import org.mg.javalib.io.External3DComputer;
 import org.openscience.cdk.CDKConstants;
-import org.openscience.cdk.aromaticity.Aromaticity;
-import org.openscience.cdk.aromaticity.ElectronDonation;
+import org.openscience.cdk.ChemFile;
 import org.openscience.cdk.exception.CDKException;
-import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.interfaces.IChemFile;
+import org.openscience.cdk.interfaces.IChemObject;
+import org.openscience.cdk.io.ISimpleChemObjectReader;
+import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
+import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
 
 public class CDKTesting
 {
-	public static void main(String[] args) throws CDKException
+	public static void main(String[] args) throws CDKException, IOException
 	{
-		IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance())
-				.parseSmiles("COC1=C2C=CC=CC2=CC(=C1O)O");
-		Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(), Cycles.or(
-				Cycles.all(), Cycles.edgeShort()));
-		aromaticity.apply(mol);
-		System.out.println(countAromAtoms(mol));
+		parseMol();
+
+		//		IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance())
+		//				.parseSmiles("COC1=C2C=CC=CC2=CC(=C1O)O");
+		//		Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(),
+		//				Cycles.or(Cycles.all(), Cycles.edgeShort()));
+		//		aromaticity.apply(mol);
+		//		System.out.println(countAromAtoms(mol));
 
 		//		{
 		//			//String smi2 = "Cl";
@@ -53,6 +63,28 @@ public class CDKTesting
 		//		System.out.println(new SmilesGenerator().create(mol));
 		//
 		//		Graphics.draw(new SmilesGenerator().create(mol));
+	}
+
+	public static void parseMol() throws CDKException, IOException
+	{
+		String mol = External3DComputer.get3D("CCC");
+		ISimpleChemObjectReader reader = new MDLV2000Reader(
+				new ByteArrayInputStream(mol.getBytes(StandardCharsets.UTF_8)));
+		IChemFile content = (IChemFile) reader.read((IChemObject) new ChemFile());
+		IAtomContainer moleclue = (IAtomContainer) ChemFileManipulator.getAllAtomContainers(content)
+				.get(0);
+		reader.close();
+		moleclue = (IAtomContainer) AtomContainerManipulator.removeHydrogens(moleclue);
+		System.out.println(moleclue.getAtomCount());
+		System.out.println(moleclue.getAtom(0).getPoint3d());
+	}
+
+	public static void isotope() throws CDKException
+	{
+		IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance())
+				.parseSmiles("[14C]");
+		System.out.println(CDKConverter.toSmiles(mol));
+
 	}
 
 	public static int countAromAtoms(IAtomContainer mol)

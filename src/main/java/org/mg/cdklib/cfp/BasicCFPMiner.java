@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.mg.cdklib.CDKConverter;
+import org.mg.cdklib.data.CDKDataset;
+import org.mg.cdklib.data.DataLoader;
 import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.DoubleArraySummary;
@@ -25,7 +27,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class BasicCFPMiner implements Serializable
 {
-	private static final long serialVersionUID = 3L;
+	private static final long serialVersionUID = 4L;
 
 	protected int numCompounds = 0;
 	protected List<String> trainingDataSmiles;
@@ -186,6 +188,55 @@ public class BasicCFPMiner implements Serializable
 		return atomsMultCache.get(key);
 	}
 
+	public static void main(String[] args) throws Exception
+	{
+		CDKDataset d = new DataLoader("../CFPMiner/data").getDataset("AMES");
+		CFPMiner miner = new CFPMiner(d.getEndpoints());
+		miner.type = CFPType.ecfp4;
+		miner.featureSelection = FeatureSelection.filt;
+		miner.hashfoldsize = 4096;
+		miner.mine(d.getSmiles());
+		miner.applyFilter();
+
+		System.out.println(miner.toString());
+
+		for (Integer fragIdx : new Integer[] { 4, 311 })
+		{
+			CFPFragment f = miner.getFragmentViaIdx(fragIdx);
+			System.out.println(fragIdx + ": " + f.getId());
+			System.out.println("matches " + miner.getCompoundsForFragment(f).size());
+		}
+		//		miner.mineSubAndSuperFragments();
+
+	}
+
+	private static transient HashMap<Integer, Set<Set<Integer>>> atomsMultCacheDistinct = new HashMap<>();
+
+	public Set<Set<Integer>> getAtomsMultipleDistinct(IAtomContainer mol, CFPFragment fragment)
+			throws Exception
+	{
+		if (featureSelection == FeatureSelection.fold)
+			throw new IllegalArgumentException();
+
+		Integer key = HashUtil.hashCode(type, mol, fragment);
+		if (!atomsMultCacheDistinct.containsKey(key))
+		{
+			Set<Set<Integer>> atomsDistinct = new HashSet<>();
+			initCircularFingerprinter();
+			fp.getBitFingerprint(mol);
+			for (int i = 0; i < fp.getFPCount(); i++)
+				if (fp.getFP(i).hashCode == fragment.getId())
+				{
+					Set<Integer> atoms = new HashSet<>();
+					for (int a : fp.getFP(i).atoms)
+						atoms.add(a);
+					atomsDistinct.add(atoms);
+				}
+			atomsMultCacheDistinct.put(key, atomsDistinct);
+		}
+		return atomsMultCacheDistinct.get(key);
+	}
+
 	public void mine(List<String> smiles) throws Exception
 	{
 		this.trainingDataSmiles = smiles;
@@ -296,6 +347,52 @@ public class BasicCFPMiner implements Serializable
 		return fragmentToIdx.get(frag);
 	}
 
+	transient HashMap<String, HashMap<CFPFragment, LinkedHashSet<CFPFragment>>> includedFragments;
+
+	public Set<CFPFragment> getIncludedFragments(CFPFragment f, String smiles) throws Exception
+	{
+		if (includedFragments == null || !includedFragments.containsKey(smiles))
+			mineIncludedFragments(smiles);
+		return includedFragments.get(smiles).get(f);
+	}
+
+	private void mineIncludedFragments(String smiles) throws Exception
+	{
+		HashMap<CFPFragment, LinkedHashSet<CFPFragment>> map = new HashMap<>();
+
+		IAtomContainer mol = CDKConverter.parseSmiles(smiles);
+		List<CFPFragment> frags = new ArrayList<>();
+		for (CFPFragment f : getFragmentsForTestCompound(mol))
+			if (fragmentToCompound.containsKey(f))
+				frags.add(f);
+
+		for (int i1 = 0; i1 < frags.size() - 1; i1++)
+		{
+			CFPFragment f1 = frags.get(i1);
+			Set<Integer> a1 = getAtomsMultiple(mol, f1);
+
+			for (int i2 = i1 + 1; i2 < frags.size(); i2++)
+			{
+				CFPFragment f2 = frags.get(i2);
+				Set<Integer> a2 = getAtomsMultiple(mol, f2);
+
+				if (SetUtil.isSubSet(a1, a2))
+					insert(map, f1, f2);
+				else if (SetUtil.isSubSet(a2, a1))
+					insert(map, f2, f1);
+			}
+		}
+
+		for (int i = 0; i < frags.size(); i++)
+		{
+			System.out.println("included in " + frags.get(i) + " : " + map.get(frags.get(i)));
+		}
+
+		if (includedFragments == null)
+			includedFragments = new HashMap<>();
+		includedFragments.put(smiles, map);
+	}
+
 	public Set<CFPFragment> getSubFragments(CFPFragment frag) throws Exception
 	{
 		if (subFragments == null)
@@ -317,22 +414,55 @@ public class BasicCFPMiner implements Serializable
 		subFragments = new HashMap<CFPFragment, LinkedHashSet<CFPFragment>>();
 		superFragments = new HashMap<CFPFragment, LinkedHashSet<CFPFragment>>();
 
-		for (int i = 0; i < getNumFragments() - 1; i++)
+		for (int i = 0; i < getNumFragments(); i++)
 		{
+			// get atom-matches of fragment in arbitrary mol where this fragment matches
+			// (we are looking for sub-fragments of this fragment, they are in each mol) 
 			CFPFragment f1 = getFragmentViaIdx(i);
 			Integer mol = getCompoundsForFragment(f1).iterator().next();
 			IAtomContainer molC = CDKConverter.parseSmiles(trainingDataSmiles.get(mol));
-			Set<Integer> atoms1 = getAtomsMultiple(molC, f1);
 
+			//Set<Integer> atoms1 = getAtomsMultiple(molC, f1);
+			Set<Set<Integer>> atoms1 = getAtomsMultipleDistinct(molC, f1);
+			int numAtoms1 = atoms1.iterator().next().size();
+			int numMatches1 = atoms1.size();
+
+			// get all other fragments that match this mol
 			for (CFPFragment f2 : getFragmentsForCompound(mol))
 			{
 				if (f1.equals(f2))
 					continue;
-				Set<Integer> atoms2 = getAtomsMultiple(molC, f2);
-				if (SetUtil.isSubSet(atoms1, atoms2))
+				// get atom-matches for other fragment
+				//Set<Integer> atoms2 = getAtomsMultiple(molC, f2);
+				Set<Set<Integer>> atoms2 = getAtomsMultipleDistinct(molC, f2);
+				int numAtoms2 = atoms2.iterator().next().size();
+				int numMatches2 = atoms2.size();
+
+				if (numAtoms2 < numAtoms1 && numMatches2 >= numMatches1)
 				{
-					insert(subFragments, f1, f2);
-					insert(superFragments, f2, f1);
+					boolean included2in1 = true;
+					for (Set<Integer> subSet1 : atoms1)
+					{
+						boolean found = false;
+						for (Set<Integer> subSet2 : atoms2)
+						{
+							if (SetUtil.isSubSet(subSet1, subSet2))
+							{
+								found = true;
+								break;
+							}
+						}
+						if (!found)
+						{
+							included2in1 = false;
+							break;
+						}
+					}
+					if (included2in1)
+					{
+						insert(subFragments, f1, f2);
+						insert(superFragments, f2, f1);
+					}
 				}
 			}
 		}

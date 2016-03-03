@@ -761,6 +761,12 @@ public class DataLoader
 					return 1;
 				else
 					return -1;
+			else if (s1.startsWith("ChEMBL") && s2.startsWith("ChEMBL"))
+			{
+				Integer i1 = Integer.parseInt(s1.substring(s1.indexOf("_") + 1));
+				Integer i2 = Integer.parseInt(s2.substring(s2.indexOf("_") + 1));
+				return i1.compareTo(i2);
+			}
 			else
 				return s1.compareTo(s2);
 		}
