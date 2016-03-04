@@ -382,11 +382,8 @@ public class BasicCFPMiner implements Serializable
 					insert(map, f2, f1);
 			}
 		}
-
-		for (int i = 0; i < frags.size(); i++)
-		{
-			System.out.println("included in " + frags.get(i) + " : " + map.get(frags.get(i)));
-		}
+		//		for (int i = 0; i < frags.size(); i++)
+		//			System.out.println("included in " + frags.get(i) + " : " + map.get(frags.get(i)));
 
 		if (includedFragments == null)
 			includedFragments = new HashMap<>();

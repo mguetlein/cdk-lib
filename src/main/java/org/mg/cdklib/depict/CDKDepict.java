@@ -65,10 +65,12 @@ public class CDKDepict
 			List<ImageIcon> icons = new ArrayList<ImageIcon>();
 			for (int i = 0; i < set.getAtomContainerCount(); i++)
 				icons.add(new ImageIcon(depictConnected(set.getAtomContainer(i))));
-			image = (BufferedImage) new MultiImageIcon(icons, Layout.horizontal, Orientation.center, 2).getImage();
+			image = (BufferedImage) new MultiImageIcon(icons, Layout.horizontal, Orientation.center,
+					2).getImage();
 		}
 		if (maxSize != -1)
-			image = (BufferedImage) ImageLoader.getShrinkedImage(new ImageIcon(image), maxSize, maxSize).getImage();
+			image = (BufferedImage) ImageLoader
+					.getShrinkedImage(new ImageIcon(image), maxSize, maxSize).getImage();
 		return image;
 	}
 
@@ -85,11 +87,12 @@ public class CDKDepict
 		generators.add(new BasicSceneGenerator());
 		generators.add(new BasicBondGenerator());
 		generators.add(new BasicAtomGenerator());
-		AtomContainerRenderer renderer = new AtomContainerRenderer(generators, new AWTFontManager());
+		AtomContainerRenderer renderer = new AtomContainerRenderer(generators,
+				new AWTFontManager());
 
 		renderer.setup(mol, new Rectangle(0, 0, 1, 1));
-		Rectangle diagramRectangle = renderer.paint(mol, new AWTDrawVisitor((Graphics2D) new BufferedImage(1, 1,
-				BufferedImage.TYPE_INT_ARGB).getGraphics()));
+		Rectangle diagramRectangle = renderer.paint(mol, new AWTDrawVisitor(
+				(Graphics2D) new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).getGraphics()));
 		int width = (int) (1.5 * (diagramRectangle.getWidth() + diagramRectangle.x));
 		int height = (int) (1.5 * (diagramRectangle.getHeight() + diagramRectangle.y));
 		width = Math.max(20, width);
@@ -106,8 +109,8 @@ public class CDKDepict
 		return image;
 	}
 
-	public static void depictMatchToPNG(String pngFile, IAtomContainer mol, Color[] cols, boolean crop, int size)
-			throws Exception
+	public static void depictMatchToPNG(String pngFile, IAtomContainer mol, Color[] cols,
+			boolean crop, int size) throws Exception
 	{
 		BufferedImage image = depictMatch(mol, cols, crop, size);
 		ImageIO.write((RenderedImage) image, "PNG", new File(pngFile));
@@ -122,8 +125,8 @@ public class CDKDepict
 
 	public static String COLOR_PROP = "colorProp";
 
-	public static BufferedImage depictMatch(IAtomContainer mol, int atoms[], boolean highlightOutgoingBonds, Color col,
-			boolean crop, int size) throws Exception
+	public static BufferedImage depictMatch(IAtomContainer mol, int atoms[],
+			boolean highlightOutgoingBonds, Color col, boolean crop, int size) throws Exception
 	{
 		if (atoms == null || atoms.length == 0)
 			if (crop)
@@ -150,8 +153,8 @@ public class CDKDepict
 		return depictMatch(mol, new Color[] { col }, crop, size);
 	}
 
-	public static BufferedImage depictMatch(IAtomContainer mol, Color palette[], boolean crop, int size)
-			throws Exception
+	public static BufferedImage depictMatch(IAtomContainer mol, Color palette[], boolean crop,
+			int size) throws Exception
 	{
 		BufferedImage image = null;
 		IAtomContainerSet set = ConnectivityChecker.partitionIntoMolecules(mol);
@@ -162,7 +165,7 @@ public class CDKDepict
 			for (int i = 0; i < set.getAtomContainerCount(); i++)
 			{
 				boolean match = false;
-				for (IChemObject c : AtomContainerUtil.getAtomsAndBonds(mol))
+				for (IChemObject c : AtomContainerUtil.getAtomsAndBonds(set.getAtomContainer(i)))
 					if (c.getProperty(COLOR_PROP, Integer.class) != null)
 						match = true;
 				if (match)
@@ -176,11 +179,14 @@ public class CDKDepict
 		{
 			List<ImageIcon> icons = new ArrayList<ImageIcon>();
 			for (int i = 0; i < set.getAtomContainerCount(); i++)
-				icons.add(new ImageIcon(depictMatchConnected(set.getAtomContainer(i), palette, crop, crop ? size : -1)));
-			image = (BufferedImage) new MultiImageIcon(icons, Layout.horizontal, Orientation.center, 2).getImage();
+				icons.add(new ImageIcon(depictMatchConnected(set.getAtomContainer(i), palette, crop,
+						crop ? size : -1)));
+			image = (BufferedImage) new MultiImageIcon(icons, Layout.horizontal, Orientation.center,
+					2).getImage();
 		}
 		if (!crop && size != -1)
-			image = (BufferedImage) ImageLoader.getShrinkedImage(new ImageIcon(image), size, size).getImage();
+			image = (BufferedImage) ImageLoader.getShrinkedImage(new ImageIcon(image), size, size)
+					.getImage();
 		return image;
 	}
 
@@ -198,8 +204,8 @@ public class CDKDepict
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	private static BufferedImage depictMatchConnected(IAtomContainer mol, Color palette[], boolean crop, int size)
-			throws Exception
+	private static BufferedImage depictMatchConnected(IAtomContainer mol, Color palette[],
+			boolean crop, int size) throws Exception
 	{
 		if (crop && size == -1)
 			throw new IllegalArgumentException();
@@ -230,7 +236,8 @@ public class CDKDepict
 		generators.add(new HighlightGenerator());
 		generators.add(new BasicBondGenerator());
 		generators.add(new BasicAtomGenerator());
-		AtomContainerRenderer renderer = new AtomContainerRenderer(generators, new AWTFontManager());
+		AtomContainerRenderer renderer = new AtomContainerRenderer(generators,
+				new AWTFontManager());
 
 		renderer.getRenderer2DModel().set(HighlightGenerator.HighlightPalette.class,
 				HighlightGenerator.createPalette(null, palette));
@@ -238,8 +245,8 @@ public class CDKDepict
 
 		// determine preferred size of molecule
 		renderer.setup(mol, new Rectangle(0, 0, 1, 1));
-		Rectangle diagramRectangle = renderer.paint(mol, new AWTDrawVisitor((Graphics2D) new BufferedImage(1, 1,
-				BufferedImage.TYPE_INT_ARGB).getGraphics()));
+		Rectangle diagramRectangle = renderer.paint(mol, new AWTDrawVisitor(
+				(Graphics2D) new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).getGraphics()));
 		int width = (int) (1.5 * (diagramRectangle.getWidth() + diagramRectangle.x));
 		int height = (int) (1.5 * (diagramRectangle.getHeight() + diagramRectangle.y));
 		width = Math.max(20, width);
@@ -310,7 +317,8 @@ public class CDKDepict
 		if (crop)
 			image = image.getSubimage(x, y, w, h);
 		if (size != -1 && (image.getWidth() > size || image.getHeight() > size))
-			image = (BufferedImage) ImageLoader.getShrinkedImage(new ImageIcon(image), size, size).getImage();
+			image = (BufferedImage) ImageLoader.getShrinkedImage(new ImageIcon(image), size, size)
+					.getImage();
 		if (crop && (image.getWidth() < size || image.getHeight() < size))
 		{
 			BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
@@ -325,7 +333,8 @@ public class CDKDepict
 
 	private static JLabel getLabel(BufferedImage img, String text)
 	{
-		BufferedImage imgW = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+		BufferedImage imgW = new BufferedImage(img.getWidth(), img.getHeight(),
+				BufferedImage.TYPE_INT_RGB);
 		imgW.getGraphics().setColor(Color.WHITE);
 		imgW.getGraphics().fillRect(0, 0, imgW.getWidth(), imgW.getHeight());
 		imgW.getGraphics().drawImage(img, 0, 0, null);
@@ -352,7 +361,7 @@ public class CDKDepict
 		//			SwingUtil.showInFrame(new JScrollPane(b.getPanel()));
 		//		}
 		{
-			DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p,20dlu,p"));
+			DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p,20dlu,p,20dlu,p"));
 			int atoms[] = new int[] { 2, 3, 4 };
 			for (Integer size : new Integer[] { 75, -1 })
 			{
@@ -361,16 +370,18 @@ public class CDKDepict
 					if (crop && size == -1)
 						continue;
 
-					for (String smiles : new String[] { "O=C1C2=C(C=CC=C2)C(=O)C3=C1C=CC=C3",
-							"C1(=C(C=CC=C1)N)OC.[H]Cl" })
+					for (boolean bonds : new boolean[] { true, false })
 					{
-						for (boolean bonds : new boolean[] { true, false })
+						for (String smiles : new String[] { "O=C1C2=C(C=CC=C2)C(=O)C3=C1C=CC=C3",
+								"C1(=C(C=CC=C1)N)OC.[H]Cl", "[Na]Cl.[H]Cl" })
 						{
 
 							BufferedImage img = depictMatch(
-									new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles), atoms,
-									bonds, Color.RED, crop, size);
-							b.append(getLabel(img, smiles + " crop:" + crop + " size:" + size + " bonds:" + bonds));
+									new SmilesParser(SilentChemObjectBuilder.getInstance())
+											.parseSmiles(smiles),
+									atoms, bonds, Color.RED, crop, size);
+							b.append(getLabel(img, smiles + " crop:" + crop + " size:" + size
+									+ " bonds:" + bonds));
 						}
 					}
 				}
