@@ -11,11 +11,12 @@ public class CFPCollisions
 
 	public static void print() throws Exception
 	{
-		DataLoader l = new DataLoader("data");
+		DataLoader l = DataLoader.INSTANCE;
 		ResultSet res = new ResultSet();
 		String datasets[] = l.allDatasets();
 		//		CFPType types[] = new CFPType[] { CFPType.ecfp6, CFPType.ecfp4, CFPType.ecfp2, CFPType.ecfp0 };
-		CFPType types[] = new CFPType[] { CFPType.fcfp6, CFPType.fcfp4, CFPType.fcfp2, CFPType.fcfp0 };
+		CFPType types[] = new CFPType[] { CFPType.fcfp6, CFPType.fcfp4, CFPType.fcfp2,
+				CFPType.fcfp0 };
 		int dCount = 0;
 		for (String name : datasets)
 		{
@@ -69,7 +70,11 @@ public class CFPCollisions
 			//			if (dCount > 2)
 			//				break;
 		}
-		ResultSetIO.printToTxtFile(new File("data_collisions/collisions_fcfp.result"), res, true);
+		ResultSetIO
+				.printToTxtFile(
+						new File(System.getProperty("user.home")
+								+ "/results/cdklib/data_collisions/collisions_fcfp.result"),
+						res, true);
 		System.exit(1);
 	}
 

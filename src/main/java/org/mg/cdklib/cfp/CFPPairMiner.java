@@ -10,8 +10,8 @@ import java.util.Set;
 
 import org.apache.commons.math3.stat.inference.TestUtils;
 import org.mg.cdklib.CDKConverter;
-import org.mg.cdklib.data.DataLoader;
 import org.mg.cdklib.data.CDKDataset;
+import org.mg.cdklib.data.DataLoader;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.HashUtil;
 import org.mg.javalib.util.ListUtil;
@@ -41,7 +41,8 @@ public class CFPPairMiner extends CFPMiner
 		double pCommonAdj;
 		double pDiff;
 
-		public Pair(CFPFragment f1, CFPFragment f2, Set<Integer> commonCompounds, Set<Integer> commonAdjacentCompounds)
+		public Pair(CFPFragment f1, CFPFragment f2, Set<Integer> commonCompounds,
+				Set<Integer> commonAdjacentCompounds)
 		{
 			if (f2.getId() < f1.getId())
 			{
@@ -79,11 +80,13 @@ public class CFPPairMiner extends CFPMiner
 			List<String> values = new ArrayList<String>();
 			for (Integer c : commonCompounds)
 				values.add(endpoints.get(c));
-			str += "common:" + CountedSet.create(values) + "(p:" + StringUtil.formatDouble(pCommon) + ") ";
+			str += "common:" + CountedSet.create(values) + "(p:" + StringUtil.formatDouble(pCommon)
+					+ ") ";
 			values = new ArrayList<String>();
 			for (Integer c : commonAdjacentCompounds)
 				values.add(endpoints.get(c));
-			str += "adjacent:" + CountedSet.create(values) + "(p:" + StringUtil.formatDouble(pCommonAdj) + ") ";
+			str += "adjacent:" + CountedSet.create(values) + "(p:"
+					+ StringUtil.formatDouble(pCommonAdj) + ") ";
 			return str;
 		}
 
@@ -188,7 +191,8 @@ public class CFPPairMiner extends CFPMiner
 		}
 	}
 
-	private Set<Integer> getAdjacent(CFPFragment h1, CFPFragment h2, HashSet<Integer> intersectCompounds)
+	private Set<Integer> getAdjacent(CFPFragment h1, CFPFragment h2,
+			HashSet<Integer> intersectCompounds)
 	{
 		try
 		{
@@ -235,7 +239,7 @@ public class CFPPairMiner extends CFPMiner
 		FeatureSelection featureSelection = FeatureSelection.filt;
 		int hashfoldsize = 1024;
 
-		CDKDataset dataset = new DataLoader("data").getDataset(datasetName, run);
+		CDKDataset dataset = DataLoader.INSTANCE.getDataset(datasetName, run);
 		List<String> list = dataset.getSmiles();
 		List<String> endpointValues = dataset.getEndpoints();
 		ListUtil.scramble(new Random(1), list, endpointValues);

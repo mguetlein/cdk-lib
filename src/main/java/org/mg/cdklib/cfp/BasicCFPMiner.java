@@ -190,7 +190,7 @@ public class BasicCFPMiner implements Serializable
 
 	public static void main(String[] args) throws Exception
 	{
-		CDKDataset d = new DataLoader("../CFPMiner/data").getDataset("AMES");
+		CDKDataset d = DataLoader.INSTANCE.getDataset("AMES");
 		CFPMiner miner = new CFPMiner(d.getEndpoints());
 		miner.type = CFPType.ecfp4;
 		miner.featureSelection = FeatureSelection.filt;

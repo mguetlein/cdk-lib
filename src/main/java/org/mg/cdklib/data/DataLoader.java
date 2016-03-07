@@ -420,7 +420,10 @@ public class DataLoader
 		});
 	}
 
-	public DataLoader(String dataFolder)
+	public static final DataLoader INSTANCE = new DataLoader(
+			System.getProperty("user.home") + "/results/cdklib/data");
+
+	private DataLoader(String dataFolder)
 	{
 		this.dataFolder = dataFolder;
 	}
@@ -774,7 +777,7 @@ public class DataLoader
 
 	public static void main(String[] args)
 	{
-		DataLoader d = new DataLoader("../CFPMiner/data");
+		DataLoader d = INSTANCE;
 		System.out.println(d.getCategoryInfo(d.allDatasets()).toLatexTable());
 
 		//		//		d.getInfo("NCTRER", "CPDBAS_Rat", "ChEMBL_61", "DUD_vegfr2", "DUD_hivrt", "DUD_cdk2", "MUV_644", "MUV_713",
