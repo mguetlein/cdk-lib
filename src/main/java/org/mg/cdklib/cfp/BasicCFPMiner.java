@@ -27,7 +27,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class BasicCFPMiner implements Serializable
 {
-	private static final long serialVersionUID = 4L;
+	private static final long serialVersionUID = 5L;
 
 	protected int numCompounds = 0;
 	protected List<String> trainingDataSmiles;
@@ -81,9 +81,9 @@ public class BasicCFPMiner implements Serializable
 		return featureSelection;
 	}
 
-	public String getFeatureType()
+	public String getNiceFragmentDescription()
 	{
-		return featureSelection.attribute() + " " + type.toNiceString();
+		return featureSelection.attribute() + " " + type.toNiceString() + " fragments";
 	}
 
 	public void setType(CFPType type)
@@ -135,12 +135,12 @@ public class BasicCFPMiner implements Serializable
 		};
 	}
 
-	public int[] getAtoms(String smiles, CFPFragment fragment) throws Exception
+	public int[] getAtoms(String smiles, CFPFragment fragment) throws CDKException
 	{
 		return getAtoms(CDKConverter.parseSmiles(smiles), fragment);
 	}
 
-	public int[] getAtoms(IAtomContainer mol, CFPFragment fragment) throws Exception
+	public int[] getAtoms(IAtomContainer mol, CFPFragment fragment) throws CDKException
 	{
 		if (featureSelection == FeatureSelection.fold)
 			throw new IllegalArgumentException();
@@ -168,7 +168,8 @@ public class BasicCFPMiner implements Serializable
 	 * @return
 	 * @throws Exception
 	 */
-	public Set<Integer> getAtomsMultiple(IAtomContainer mol, CFPFragment fragment) throws Exception
+	public Set<Integer> getAtomsMultiple(IAtomContainer mol, CFPFragment fragment)
+			throws CDKException
 	{
 		if (featureSelection == FeatureSelection.fold)
 			throw new IllegalArgumentException();
@@ -213,7 +214,7 @@ public class BasicCFPMiner implements Serializable
 	private static transient HashMap<Integer, Set<Set<Integer>>> atomsMultCacheDistinct = new HashMap<>();
 
 	public Set<Set<Integer>> getAtomsMultipleDistinct(IAtomContainer mol, CFPFragment fragment)
-			throws Exception
+			throws CDKException
 	{
 		if (featureSelection == FeatureSelection.fold)
 			throw new IllegalArgumentException();
@@ -349,14 +350,14 @@ public class BasicCFPMiner implements Serializable
 
 	transient HashMap<String, HashMap<CFPFragment, LinkedHashSet<CFPFragment>>> includedFragments;
 
-	public Set<CFPFragment> getIncludedFragments(CFPFragment f, String smiles) throws Exception
+	public Set<CFPFragment> getIncludedFragments(CFPFragment f, String smiles) throws CDKException
 	{
 		if (includedFragments == null || !includedFragments.containsKey(smiles))
 			mineIncludedFragments(smiles);
 		return includedFragments.get(smiles).get(f);
 	}
 
-	private void mineIncludedFragments(String smiles) throws Exception
+	private void mineIncludedFragments(String smiles) throws CDKException
 	{
 		HashMap<CFPFragment, LinkedHashSet<CFPFragment>> map = new HashMap<>();
 
@@ -390,21 +391,21 @@ public class BasicCFPMiner implements Serializable
 		includedFragments.put(smiles, map);
 	}
 
-	public Set<CFPFragment> getSubFragments(CFPFragment frag) throws Exception
+	public Set<CFPFragment> getSubFragments(CFPFragment frag) throws CDKException
 	{
 		if (subFragments == null)
 			mineSubAndSuperFragments();
 		return subFragments.get(frag);
 	}
 
-	public Set<CFPFragment> getSuperFragments(CFPFragment frag) throws Exception
+	public Set<CFPFragment> getSuperFragments(CFPFragment frag) throws CDKException
 	{
 		if (superFragments == null)
 			mineSubAndSuperFragments();
 		return superFragments.get(frag);
 	}
 
-	private void mineSubAndSuperFragments() throws Exception
+	private void mineSubAndSuperFragments() throws CDKException
 	{
 		if (subFragments != null)
 			throw new IllegalArgumentException();
@@ -479,7 +480,7 @@ public class BasicCFPMiner implements Serializable
 		//		System.out.println("\n");
 	}
 
-	public LinkedHashSet<CFPFragment> getFragmentsForTestCompound(String smiles) throws Exception
+	public LinkedHashSet<CFPFragment> getFragmentsForTestCompound(String smiles) throws CDKException
 	{
 		return getFragmentsForTestCompound(CDKConverter.parseSmiles(smiles));
 	}

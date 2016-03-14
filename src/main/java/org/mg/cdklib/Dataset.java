@@ -44,17 +44,19 @@ public class Dataset
 	public static Dataset get(Data data) throws FileNotFoundException, IOException, CDKException
 	{
 		if (data == Data.Drugbank)
-			return Dataset.parseDataset("data/drugbank/all.sdf");
+			return Dataset.parseDataset("/home/martin/results/dream/data/drugbank/all.sdf");
 		throw new IllegalStateException();
 	}
 
-	public static Dataset parseDataset(String inputFile) throws FileNotFoundException, IOException, CDKException
+	public static Dataset parseDataset(String inputFile)
+			throws FileNotFoundException, IOException, CDKException
 	{
 		ISimpleChemObjectReader reader;
 		if (inputFile.endsWith("smi"))
 			reader = new SMILESReader(new FileInputStream(inputFile));
 		else
-			reader = new ReaderFactory().createReader(new InputStreamReader(new FileInputStream(inputFile)));
+			reader = new ReaderFactory()
+					.createReader(new InputStreamReader(new FileInputStream(inputFile)));
 		IChemFile content = (IChemFile) reader.read((IChemObject) new ChemFile());
 		List<IAtomContainer> molecules = ChemFileManipulator.getAllAtomContainers(content);
 		reader.close();
@@ -87,12 +89,14 @@ public class Dataset
 	@Override
 	public String toString()
 	{
-		return "#mols: " + molecules.size() + "\n#props: " + properties.size() + "\n#uniqInchis: " + uniqInchis.size();
+		return "#mols: " + molecules.size() + "\n#props: " + properties.size() + "\n#uniqInchis: "
+				+ uniqInchis.size();
 	}
 
 	public static final String PROB_SIM = "Similarity";
 
-	public List<IAtomContainer> search(IAtomContainer query, Type fp, double minSim) throws CDKException
+	public List<IAtomContainer> search(IAtomContainer query, Type fp, double minSim)
+			throws CDKException
 	{
 		BitSet queryBitSet = Fingerprinter.get(query, fp);
 		List<IAtomContainer> res = new ArrayList<>();
@@ -112,7 +116,8 @@ public class Dataset
 			@Override
 			public int compare(IAtomContainer o1, IAtomContainer o2)
 			{
-				return ((Double) o2.getProperty(PROB_SIM)).compareTo((Double) o1.getProperty(PROB_SIM));
+				return ((Double) o2.getProperty(PROB_SIM))
+						.compareTo((Double) o1.getProperty(PROB_SIM));
 			}
 		});
 		return res;

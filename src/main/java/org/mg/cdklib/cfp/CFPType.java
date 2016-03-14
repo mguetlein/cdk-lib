@@ -57,6 +57,6 @@ public enum CFPType
 
 	public String toNiceString()
 	{
-		return this.toString();//.toUpperCase();
+		return this.toString().toUpperCase();
 	}
 }
