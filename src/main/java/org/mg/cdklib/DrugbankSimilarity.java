@@ -13,14 +13,28 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class DrugbankSimilarity
 {
-	public static HashMap<String, HashMap<String, Double>> get(Dataset data, String propKey, double relMinFreq,
-			double simThres) throws FileNotFoundException, IOException, CDKException
+
+	String drugbankFilepath = null;
+
+	public DrugbankSimilarity()
+	{
+	}
+
+	public void setDrugbankFilepath(String drugbankFilepath)
+	{
+		this.drugbankFilepath = drugbankFilepath;
+	}
+
+	public HashMap<String, HashMap<String, Double>> get(Dataset data, String propKey,
+			double relMinFreq, double simThres)
+					throws FileNotFoundException, IOException, CDKException
 	{
 		int absMinFreq = Math.max(1, (int) (data.getMolecules().size() * relMinFreq));
-		System.err.println("looking for drug-bank compounds with sim>=" + simThres + " in at least " + absMinFreq
-				+ " compounds");
+		System.err.println("looking for drug-bank compounds with sim>=" + simThres + " in at least "
+				+ absMinFreq + " compounds");
 
-		Dataset drugbank = Dataset.get(Dataset.Data.Drugbank);
+		Dataset drugbank = drugbankFilepath == null ? Dataset.get(Dataset.Data.Drugbank)
+				: Dataset.parseDataset(drugbankFilepath);
 		List<IAtomContainer> selectedDrugbankCompounds = new ArrayList<>();
 		for (IAtomContainer m : drugbank.getMolecules())
 		{
@@ -54,7 +68,8 @@ public class DrugbankSimilarity
 			for (IAtomContainer mol : data.getMolecules())
 			{
 				String k = mol.getProperty(propKey);
-				double d = Fingerprinter.tanimotoSimilarity(mBS, Fingerprinter.get(mol, Fingerprinter.Type.ECFP6));
+				double d = Fingerprinter.tanimotoSimilarity(mBS,
+						Fingerprinter.get(mol, Fingerprinter.Type.ECFP6));
 				sim.put(k, d);
 			}
 			res.put(name, sim);
