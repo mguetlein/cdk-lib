@@ -17,7 +17,6 @@ import java.util.Set;
 
 import org.mg.cdklib.CDKConverter;
 import org.mg.javalib.datamining.ResultSet;
-import org.mg.javalib.datamining.ResultSetIO;
 import org.mg.javalib.io.KeyValueFileStore;
 import org.mg.javalib.util.ArrayUtil;
 import org.mg.javalib.util.CountedSet;
@@ -437,13 +436,13 @@ public class DataLoader
 	//		return new File(dataFolder + File.separator + name + ".csv").exists();
 	//	}
 
-	public ResultSet getInfo(String... ids)
+	public ResultSet getInfo(boolean cite, String... ids)
 	{
 		ResultSet set = new ResultSet();
 		set.setNicePropery("size", "compounds");
 		for (String n : ids)
 		{
-			System.out.println(n);
+			//			System.out.println(n);
 
 			int rIdx = set.addResult();
 			set.setResultValue(rIdx, "category", datasetCategory.get(n));
@@ -460,27 +459,33 @@ public class DataLoader
 			set.setResultValue(rIdx, "target", datasetActivityDesc.get(n));
 
 			//			set.setResultValue(rIdx, "dataset-weblink", CollectionUtil.toString(datasetWeblinks.get(n)));
-			String cit = "\\cite{";
-			for (Source s : citation.get(n))
-				if (!(s instanceof WebSource))
-					cit += s.citationKey + ",";
-			cit = cit.substring(0, cit.length() - 1) + "}";
-			set.setResultValue(rIdx, "source", cit);
+
+			String source;
+			if (cite)
+			{
+				String cit = "\\cite{";
+				for (Source s : citation.get(n))
+					if (!(s instanceof WebSource))
+						cit += s.citationKey + ",";
+				cit = cit.substring(0, cit.length() - 1) + "}";
+				source = cit;
+			}
+			else
+			{
+				source = "";
+				for (Source s : citation.get(n))
+					if (s instanceof WebSource)
+						source += "\\url{" + s.citationUrl + "}, ";
+				source = source.substring(0, source.length() - 2);
+			}
+			set.setResultValue(rIdx, "source", source);
 		}
 		return set;
 	}
 
-	public ResultSet getCategoryInfo(String... name)
+	public ResultSet getCategoryInfo(boolean cite, String... name)
 	{
-		ResultSet set;
-		File f = new File("/tmp/info.results");
-		if (!f.exists())
-		{
-			set = getInfo(name);
-			ResultSetIO.printToTxtFile(f, set, true);
-		}
-		else
-			set = ResultSetIO.parseFromTxtFile(f);
+		ResultSet set = getInfo(cite, name);
 
 		for (int idx = 0; idx < set.getNumResults(); idx++)
 		{
@@ -523,6 +528,16 @@ public class DataLoader
 		set.setNicePropery("numDatasets", "num");
 		set.setNicePropery("size", "compounds");
 		//		System.out.println(set.toNiceString());
+
+		if (!cite)
+		{
+			set.removePropery("category");
+			set.removePropery("numDatasets");
+			set.removePropery("size");
+			set.removePropery("active");
+			set.removePropery("in-active");
+		}
+
 		return set;
 	}
 
@@ -725,14 +740,35 @@ public class DataLoader
 
 	private CDKDataset getDatasetFromCSV(String name) throws CDKException
 	{
+		return getDatasetFromCSV(name, dataFolder + File.separator + name + ".csv", 0, 1);
+	}
+
+	public static CDKDataset getDatasetFromCSV(String name, String path, int smilesCol,
+			int endpointsCol) throws CDKException
+	{
 		List<String> endpoints = new ArrayList<>();
 		List<String> smiles = new ArrayList<>();
 
-		CSVFile csv = FileUtil.readCSV(dataFolder + File.separator + name + ".csv");
+		CSVFile csv = FileUtil.readCSV(path);
 		for (int i = 1; i < csv.content.size(); i++)
 		{
-			smiles.add(csv.content.get(i)[0]);
-			endpoints.add(csv.content.get(i)[1]);
+			smiles.add(csv.content.get(i)[smilesCol]);
+			endpoints.add(csv.content.get(i)[endpointsCol]);
+		}
+
+		return createDataset(name, smiles, endpoints, new ArrayList<String>());
+	}
+
+	public static CDKDataset getDatasetFromSMILES(String name, String path) throws CDKException
+	{
+		List<String> endpoints = new ArrayList<>();
+		List<String> smiles = new ArrayList<>();
+
+		for (String s : FileUtil.readStringFromFile(path).split("\n"))
+		{
+			String ss[] = s.split("\\s");
+			smiles.add(ss[0]);
+			endpoints.add(ss[1]);
 		}
 
 		return createDataset(name, smiles, endpoints, new ArrayList<String>());
@@ -778,25 +814,25 @@ public class DataLoader
 	public static void main(String[] args)
 	{
 		DataLoader d = INSTANCE;
-		System.out.println(d.getCategoryInfo(d.allDatasets()).toLatexTable());
+		//		System.out.println(d.getCategoryInfo(d.allDatasets()).toLatexTable());
 
-		//		//		d.getInfo("NCTRER", "CPDBAS_Rat", "ChEMBL_61", "DUD_vegfr2", "DUD_hivrt", "DUD_cdk2", "MUV_644", "MUV_713",
-		//		//				"MUV_859", "AMES");
-		//		String data[] = d.allDatasets();
+		//		d.getInfo("NCTRER", "CPDBAS_Rat", "ChEMBL_61", "DUD_vegfr2", "DUD_hivrt", "DUD_cdk2", "MUV_644", "MUV_713",
+		//				"MUV_859", "AMES");
+		String data[] = d.allDatasets();
 		//		Arrays.sort(data, CFPDataComparator);
 		//		System.out.println(ArrayUtil.toString(data));
-		//		//data = new String[] { "NCTRER" };
-		//		for (String dat : data)
-		//		{
-		//			CDKDataset da = d.getDataset(dat);
-		//			if (!da.warnings.isEmpty())
-		//			{
-		//				System.out.println(dat + " Warnings:");
-		//				for (String warn : da.warnings)
-		//					System.out.println("* " + warn);
-		//				System.out.println();
-		//			}
-		//		}
+		data = new String[] { "CPDBAS_Mouse" };
+		for (String dat : data)
+		{
+			CDKDataset da = d.getDataset(dat);
+			if (!da.warnings.isEmpty())
+			{
+				System.out.println(dat + " Warnings:");
+				for (String warn : da.warnings)
+					System.out.println("* " + warn);
+				System.out.println();
+			}
+		}
 	}
 
 	public static String[] getClassValues(List<String> endpoints)
