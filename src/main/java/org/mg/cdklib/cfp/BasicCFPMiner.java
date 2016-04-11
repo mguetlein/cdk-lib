@@ -27,7 +27,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class BasicCFPMiner implements Serializable
 {
-	private static final long serialVersionUID = 5L;
+	private static final long serialVersionUID = 6L;
 
 	protected int numCompounds = 0;
 	protected List<String> trainingDataSmiles;
@@ -501,7 +501,11 @@ public class BasicCFPMiner implements Serializable
 					fragments.add(new CFPFragment(i));
 			else
 				for (int i = 0; i < fp.getFPCount(); i++)
-					fragments.add(new CFPFragment(fp.getFP(i).hashCode));
+				{
+					CFPFragment frag = new CFPFragment(fp.getFP(i).hashCode);
+					if (fragmentToCompound.containsKey(frag))
+						fragments.add(frag);
+				}
 			testMoleculeToFragment.put(testMol, fragments);
 		}
 		return testMoleculeToFragment.get(testMol);
