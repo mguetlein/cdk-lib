@@ -253,6 +253,8 @@ public class CDKDepict
 		height = Math.max(20, height);
 
 		// draw according to preferred size (with 10 pixels extra for the highlights)
+		width += 10;
+		height += 10;
 		Rectangle drawArea = new Rectangle(5, 5, width - 10, height - 10);
 		renderer.setup(mol, drawArea);
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
@@ -373,7 +375,7 @@ public class CDKDepict
 					for (boolean bonds : new boolean[] { true, false })
 					{
 						for (String smiles : new String[] { "O=C1C2=C(C=CC=C2)C(=O)C3=C1C=CC=C3",
-								"C1(=C(C=CC=C1)N)OC.[H]Cl", "[Na]Cl.[H]Cl" })
+								"C1(=C(C=CC=C1)N)OC.[H]Cl", "[Na].[H]Cl[Mg]" })
 						{
 
 							BufferedImage img = depictMatch(
@@ -394,6 +396,17 @@ public class CDKDepict
 
 	public static void main(String[] args) throws InvalidSmilesException, Exception
 	{
+		//		IAtomContainer mol = CDKConverter.parseSmiles("O");
+		//		JPanel p = new JPanel();
+		//		p.add(new JLabel(new ImageIcon(depict(mol, 150))));
+		//		p.add(new JLabel(
+		//				new ImageIcon(depictMatch(mol, new int[] { 0 }, false, Color.RED, true, 150))));
+		//		p.add(new JLabel(
+		//				new ImageIcon(depictMatch(mol, new int[] { 0 }, false, Color.RED, false, 150))));
+		//		SwingUtil.showInFrame(p);
+		//		SwingUtil.waitWhileWindowsVisible();
+		//		System.exit(1);
+
 		demo();
 	}
 
