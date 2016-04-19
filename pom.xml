@@ -2,13 +2,13 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mg.cdklib</groupId>
   <artifactId>cdk-lib</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>1.0.0</version>
   
     <properties>
   <maven.compiler.source>1.7</maven.compiler.source>
   <maven.compiler.target>1.7</maven.compiler.target>
      <!--  <cdk.version>1.5.10</cdk.version>  -->
-      <cdk.version>1.5.12-SNAPSHOT</cdk.version>
+      <cdk.version>1.5.12-kramerlab</cdk.version>
   </properties>
   
   <repositories>
@@ -190,7 +190,7 @@
         <dependency>
     	<groupId>org.mg.javalib</groupId>
     	<artifactId>JavaLib</artifactId>
-    	<version>3.0.0-SNAPSHOT</version>
+    	<version>3.0.0</version>
     </dependency>
     
     <dependency>

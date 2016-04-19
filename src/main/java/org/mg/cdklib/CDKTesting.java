@@ -17,6 +17,7 @@ import org.openscience.cdk.interfaces.IChemObject;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.MDLV2000Reader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -24,9 +25,28 @@ import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
 
 public class CDKTesting
 {
+	public static void normalizeTest() throws CDKException
+	{
+		normalize("C(=O)O");
+		normalize("C(=O)[O-]");
+	}
+
+	public static void normalize(String smi) throws CDKException
+	{
+		IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance())
+				.parseSmiles(smi);
+
+		AtomContainerManipulator.convertImplicitToExplicitHydrogens(mol);
+
+		System.out.println(new SmilesGenerator().create(mol));
+
+	}
+
 	public static void main(String[] args) throws CDKException, IOException
 	{
-		parseMol();
+		normalizeTest();
+
+		//		parseMol();
 
 		//		IAtomContainer mol = new SmilesParser(SilentChemObjectBuilder.getInstance())
 		//				.parseSmiles("COC1=C2C=CC=CC2=CC(=C1O)O");
