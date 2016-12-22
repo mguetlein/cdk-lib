@@ -2,6 +2,8 @@ package org.mg.cdklib.data;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -38,6 +40,7 @@ public class DataLoader
 	public String dataFolder = "data";
 	private HashMap<String, CDKDataset> datasets = new HashMap<>();
 	private boolean resampleDecoys = true;
+	public static boolean VERBOSE = false;
 
 	public static class Source
 	{
@@ -354,6 +357,14 @@ public class DataLoader
 			datasetCategory.put(n, OTHER_DATASETS);
 			datasetSubCategory.put(n, n);
 		}
+		n = "LTKB";
+		datasetActivityDesc.put(n, "drug-induced liver injury (DILI)");
+		addDatasetCitation(n, "-", "-");
+		addDatasetWeblink(n, "Liver Toxicity Knowledge Base (LTKB)",
+				"http://www.fda.gov/ScienceResearch/BioinformaticsTools/LiverToxicityKnowledgeBase/ucm2024036.htm",
+				"Liver Toxicity Knowledge Base (LTKB)");
+		datasetCategory.put(n, OTHER_DATASETS);
+		datasetSubCategory.put(n, n);
 	}
 
 	public String[] reducedDatasets()
@@ -568,8 +579,13 @@ public class DataLoader
 				{
 					if (sdfDatasets.containsKey(name))
 						data = getDatasetFromSDF(name);
-					else
+					else if (new File(dataFolder + File.separator + name + ".csv").exists())
 						data = getDatasetFromCSV(name);
+					else if (new File(dataFolder + File.separator + name + ".smi").exists())
+						data = getDatasetFromSMILES(name);
+					else
+						throw new RuntimeException(
+								"dataset not found: " + name + " in " + dataFolder);
 					parsedDatasets.store(name, data);
 				}
 				else
@@ -609,25 +625,34 @@ public class DataLoader
 		}
 	}
 
-	private CDKDataset getDatasetFromSDF(String name) throws Exception
+	public static CDKDataset getDatasetFromSDF(String name, String path)
+			throws CDKException, FileNotFoundException, IOException
 	{
+		return getDatasetFromSDF(name, path, null);
+	}
+
+	public static CDKDataset getDatasetFromSDF(String name, String path, String endpoint)
+			throws CDKException, FileNotFoundException, IOException
+	{
+		if (VERBOSE)
+			System.err.println("data-loader> " + endpoint);
+
 		List<String> endpoints = new ArrayList<>();
 		List<String> smiles = new ArrayList<>();
 
-		ISimpleChemObjectReader reader = new ReaderFactory().createReader(new InputStreamReader(
-				new FileInputStream(dataFolder + File.separator + sdfDatasets.get(name))));
+		ISimpleChemObjectReader reader = new ReaderFactory()
+				.createReader(new InputStreamReader(new FileInputStream(path)));
 		IChemFile content = (IChemFile) reader.read((IChemObject) new ChemFile());
-		String endpoint = sdfEndpoints.get(name);
 		int invalidCompound = 0;
 		int missingEndpoint = 0;
 		for (IAtomContainer a : ChemFileManipulator.getAllAtomContainers(content))
 		{
 			if (a.getAtomCount() == 0)
 				invalidCompound++;
-			else if (a.getProperty(endpoint) == null
+			else if (endpoint != null && (a.getProperty(endpoint) == null
 					|| a.getProperty(endpoint).toString().equals("unspecified")
 					|| a.getProperty(endpoint).toString().equals("blank")
-					|| a.getProperty(endpoint).toString().equals("inconclusive"))
+					|| a.getProperty(endpoint).toString().equals("inconclusive")))
 				missingEndpoint++;
 			else
 			{
@@ -648,7 +673,10 @@ public class DataLoader
 				//					System.exit(1);
 				//				}
 				smiles.add(smi);
-				endpoints.add(a.getProperty(endpoint).toString());
+				if (endpoint != null)
+					endpoints.add(a.getProperty(endpoint).toString());
+				else
+					endpoints.add("n/a");
 			}
 		}
 		reader.close();
@@ -664,6 +692,13 @@ public class DataLoader
 		return createDataset(name, smiles, endpoints, warnings);
 	}
 
+	private CDKDataset getDatasetFromSDF(String name)
+			throws FileNotFoundException, CDKException, IOException
+	{
+		return getDatasetFromSDF(name, dataFolder + File.separator + sdfDatasets.get(name),
+				sdfEndpoints.get(name));
+	}
+
 	private static CDKDataset createDataset(String name, List<String> smiles,
 			List<String> endpoints, List<String> warnings) throws CDKException
 	{
@@ -671,6 +706,7 @@ public class DataLoader
 		int idx = 0;
 		for (String smi : smiles)
 		{
+			//			System.err.println("smiles: " + smi);
 			String uniq = CDKConverter.toAbsoluteSmiles(smi);
 			if (!uniqToActivity.containsKey(uniq))
 				uniqToActivity.put(uniq, new HashSet<String>());
@@ -690,16 +726,18 @@ public class DataLoader
 			if (uniqAdded.containsKey(uniq))
 			{
 				skipEq++;
-				System.err.println("createDataset> skip equal value " + uniqToActivity.get(uniq)
-						+ " duplicate " + uniq + ":\n" + i + " " + smiles.get(i)
-						+ "\nis equal to:\n" + uniqAdded.get(uniq) + " "
-						+ smiles.get(uniqAdded.get(uniq)));
+				if (VERBOSE)
+					System.err.println("createDataset> skip equal value " + uniqToActivity.get(uniq)
+							+ " duplicate " + uniq + ":\n" + i + " " + smiles.get(i)
+							+ "\nis equal to:\n" + uniqAdded.get(uniq) + " "
+							+ smiles.get(uniqAdded.get(uniq)));
 			}
 			else if (uniqToActivity.get(uniq).size() > 1)
 			{
 				skipDiff++;
-				System.out.println("createDataset> skip different value duplicate: " + i + " "
-						+ uniqToActivity.get(uniq) + " " + smiles.get(i) + " " + uniq);
+				if (VERBOSE)
+					System.err.println("createDataset> skip different value duplicate: " + i + " "
+							+ uniqToActivity.get(uniq) + " " + smiles.get(i) + " " + uniq);
 			}
 			else
 			{
@@ -759,18 +797,43 @@ public class DataLoader
 		return createDataset(name, smiles, endpoints, new ArrayList<String>());
 	}
 
+	private CDKDataset getDatasetFromSMILES(String name) throws CDKException
+	{
+		return getDatasetFromSMILES(name, dataFolder + File.separator + name + ".smi");
+	}
+
 	public static CDKDataset getDatasetFromSMILES(String name, String path) throws CDKException
+	{
+		return getDatasetFromSMILES(name, path, false);
+	}
+
+	public static CDKDataset getDatasetFromSMILES(String name, String path, boolean noEndpoints)
+			throws CDKException
 	{
 		List<String> endpoints = new ArrayList<>();
 		List<String> smiles = new ArrayList<>();
+		int numInvalid = 0;
 
 		for (String s : FileUtil.readStringFromFile(path).split("\n"))
 		{
 			String ss[] = s.split("\\s");
-			smiles.add(ss[0]);
-			endpoints.add(ss[1]);
+			try
+			{
+				CDKConverter.toAbsoluteSmiles(ss[0]);
+				smiles.add(ss[0]);
+				endpoints.add((ss.length > 1 && !noEndpoints) ? ss[1] : "");
+			}
+			catch (CDKException e)
+			{
+				numInvalid++;
+				if (VERBOSE)
+					System.err.println("createDataset> could not read smiles: " + ss[0]);
+			}
 		}
 
+		List<String> warnings = new ArrayList<>();
+		if (numInvalid > 0)
+			warnings.add("Could not read " + numInvalid + " smiles.");
 		return createDataset(name, smiles, endpoints, new ArrayList<String>());
 	}
 
@@ -847,7 +910,7 @@ public class DataLoader
 		Integer activeIdx = null;
 		for (int i = 0; i < classValues.length; i++)
 			if (classValues[i].equals("active") || classValues[i].equals("mutagen")
-					|| classValues[i].equals("1"))
+					|| classValues[i].equals("1") || classValues[i].equals("most-concern"))
 				activeIdx = i;
 		if (activeIdx == null)
 			throw new IllegalStateException("what is active? " + ArrayUtil.toString(classValues));
