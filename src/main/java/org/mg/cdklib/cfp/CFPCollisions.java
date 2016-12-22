@@ -4,7 +4,7 @@ import java.io.File;
 
 import org.mg.cdklib.data.CDKDataset;
 import org.mg.cdklib.data.DataProvider;
-import org.mg.cdklib.data.DataProvider.Dataset;
+import org.mg.cdklib.data.DataProvider.DataID;
 import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.datamining.ResultSetIO;
 
@@ -18,7 +18,7 @@ public class CFPCollisions
 		CFPType types[] = new CFPType[] { CFPType.fcfp6, CFPType.fcfp4, CFPType.fcfp2,
 				CFPType.fcfp0 };
 		int dCount = 0;
-		for (Dataset name : DataProvider.cfpDatasets())
+		for (DataID name : DataProvider.cfpDatasets())
 		{
 			System.out.println(dCount + ": " + name);
 			CDKDataset d = DataProvider.getDataset(name);

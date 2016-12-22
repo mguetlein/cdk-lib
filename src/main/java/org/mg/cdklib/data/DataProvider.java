@@ -37,7 +37,7 @@ import org.openscience.cdk.tools.manipulator.ChemFileManipulator;
 
 public class DataProvider
 {
-	public static enum Dataset
+	public static enum DataID
 	{
 		AMES, NCTRER, // 
 		CPDBAS_Mouse, CPDBAS_MultiCellCall, CPDBAS_Mutagenicity, CPDBAS_Rat, CPDBAS_SingleCellCall,
@@ -101,16 +101,16 @@ public class DataProvider
 	public static String OTHER_DATASETS = "Other";
 	public static String BALANCED_DATASETS = "Balanced";
 	public static String VS_DATASETS = "Virtual-Screening";
-	private static HashMap<Dataset, CDKDataset> datasets = new HashMap<>();
-	private static Set<Dataset> cfpDatasets = new HashSet<>();
-	private static HashMap<Dataset, String> datasetCategory = new HashMap<>();
-	private static HashMap<Dataset, String> datasetSubCategory = new HashMap<>();
-	private static HashMap<Dataset, String> sdfDatasets = new HashMap<>();
-	private static HashMap<Dataset, String> sdfEndpoints = new HashMap<>();
-	private static HashMap<Dataset, HashSet<Source>> citation = new HashMap<>();
-	private static HashMap<Dataset, String> datasetActivityDesc = new HashMap<>();
+	private static HashMap<DataID, CDKDataset> datasets = new HashMap<>();
+	private static Set<DataID> cfpDatasets = new HashSet<>();
+	private static HashMap<DataID, String> datasetCategory = new HashMap<>();
+	private static HashMap<DataID, String> datasetSubCategory = new HashMap<>();
+	private static HashMap<DataID, String> sdfDatasets = new HashMap<>();
+	private static HashMap<DataID, String> sdfEndpoints = new HashMap<>();
+	private static HashMap<DataID, HashSet<Source>> citation = new HashMap<>();
+	private static HashMap<DataID, String> datasetActivityDesc = new HashMap<>();
 
-	private static void addDatasetWeblink(Dataset dataset, String citationKey, String citationUrl,
+	private static void addDatasetWeblink(DataID dataset, String citationKey, String citationUrl,
 			String title)
 	{
 		Source s = new WebSource(citationKey, citationUrl, title);
@@ -119,7 +119,7 @@ public class DataProvider
 		citation.get(dataset).add(s);
 	}
 
-	private static void addDatasetCitation(Dataset dataset, String citationKey, String citationUrl)
+	private static void addDatasetCitation(DataID dataset, String citationKey, String citationUrl)
 	{
 		Source s = new Source(citationKey, citationUrl);
 		if (!citation.containsKey(dataset))
@@ -129,7 +129,7 @@ public class DataProvider
 
 	static
 	{
-		for (Dataset n : Dataset.values())
+		for (DataID n : DataID.values())
 		{
 			if (n.toString().startsWith("CPDBAS_"))
 			{
@@ -141,14 +141,14 @@ public class DataProvider
 						"http://toxsci.oxfordjournals.org/content/85/2/747.short");
 				datasetActivityDesc.put(n, "carcinogenicity");
 				// two small
-				if (n != Dataset.CPDBAS_Hamster && n != Dataset.CPDBAS_Dog_Primates)
+				if (n != DataID.CPDBAS_Hamster && n != DataID.CPDBAS_Dog_Primates)
 					cfpDatasets.add(n);
 				datasetCategory.put(n, BALANCED_DATASETS);
 				datasetSubCategory.put(n, "CPDBAS");
 			}
-			else if (n == Dataset.NCTRER)
+			else if (n == DataID.NCTRER)
 			{
-				n = Dataset.valueOf("NCTRER");
+				n = DataID.valueOf("NCTRER");
 				addDatasetWeblink(n, "EPA", "http://www.epa.gov/ncct/dsstox/sdf_nctrer.html",
 						"Estrogen Receptor Binding Database File");
 				addDatasetCitation(n, "fang_structure-activity_2001",
@@ -160,7 +160,7 @@ public class DataProvider
 				datasetCategory.put(n, BALANCED_DATASETS);
 				datasetSubCategory.put(n, n.toString());
 			}
-			else if (n == Dataset.AMES)
+			else if (n == DataID.AMES)
 			{
 				sdfDatasets.put(n, "cas_4337.ob.noH.sdf");
 				sdfEndpoints.put(n, "Ames test categorisation");
@@ -183,11 +183,11 @@ public class DataProvider
 						"http://pubs.acs.org/doi/abs/10.1021/ci400466r");
 				addDatasetWeblink(n, "Benchmarking-Platform",
 						"https://github.com/rdkit/benchmarking_platform", "Benchmarking Platform");
-				if (n == Dataset.DUD_cdk2)
+				if (n == DataID.DUD_cdk2)
 					datasetActivityDesc.put(n, "cyclin-dependent kinase");
-				else if (n == Dataset.DUD_hivrt)
+				else if (n == DataID.DUD_hivrt)
 					datasetActivityDesc.put(n, "HIV reverse transcriptase");
-				else if (n == Dataset.DUD_vegfr2)
+				else if (n == DataID.DUD_vegfr2)
 					datasetActivityDesc.put(n, "vascular endothelial growth factor receptor");
 				else
 					throw new IllegalArgumentException();
@@ -241,7 +241,7 @@ public class DataProvider
 			//			datasetCategory.put(n, OTHER_DATASETS);
 			//			datasetSubCategory.put(n, n);
 			//		}
-			else if (n == Dataset.LTKB)
+			else if (n == DataID.LTKB)
 			{
 				datasetActivityDesc.put(n, "drug-induced liver injury (DILI)");
 				addDatasetCitation(n, "-", "-");
@@ -286,58 +286,58 @@ public class DataProvider
 		//				"cell division cycle 7-related protein kinase");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_193, "coagulation factor IX");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_80, "FK506-binding protein 1A");
-		datasetActivityDesc.put(Dataset.ChEMBL_165, "HERG");
-		datasetActivityDesc.put(Dataset.ChEMBL_10193, "carbonic anhydrase I");
-		datasetActivityDesc.put(Dataset.ChEMBL_15, "carbonic anhydrase II");
-		datasetActivityDesc.put(Dataset.ChEMBL_11489, "11-beta-hydroxysteroid dehydrogenase 1");
-		datasetActivityDesc.put(Dataset.ChEMBL_121, "serotonin transporter");
-		datasetActivityDesc.put(Dataset.ChEMBL_72, "dopamine D2 receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_259, "cannabinoid CB2 receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_10188, "MAP kinase p38 alpha");
-		datasetActivityDesc.put(Dataset.ChEMBL_108, "serotonin 2c (5-HT2c) receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_12952, "carbonic anhydrase IX");
-		datasetActivityDesc.put(Dataset.ChEMBL_93, "acetylcholinesterase");
-		datasetActivityDesc.put(Dataset.ChEMBL_10980,
+		datasetActivityDesc.put(DataID.ChEMBL_165, "HERG");
+		datasetActivityDesc.put(DataID.ChEMBL_10193, "carbonic anhydrase I");
+		datasetActivityDesc.put(DataID.ChEMBL_15, "carbonic anhydrase II");
+		datasetActivityDesc.put(DataID.ChEMBL_11489, "11-beta-hydroxysteroid dehydrogenase 1");
+		datasetActivityDesc.put(DataID.ChEMBL_121, "serotonin transporter");
+		datasetActivityDesc.put(DataID.ChEMBL_72, "dopamine D2 receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_259, "cannabinoid CB2 receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_10188, "MAP kinase p38 alpha");
+		datasetActivityDesc.put(DataID.ChEMBL_108, "serotonin 2c (5-HT2c) receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_12952, "carbonic anhydrase IX");
+		datasetActivityDesc.put(DataID.ChEMBL_93, "acetylcholinesterase");
+		datasetActivityDesc.put(DataID.ChEMBL_10980,
 				"vascular endothelial growth factor receptor 2");
-		datasetActivityDesc.put(Dataset.ChEMBL_19905, "melanin-concentrating hormone receptor 1");
-		datasetActivityDesc.put(Dataset.ChEMBL_107, "serotonin 2a (5-HT2a) receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_87, "cannabinoid CB1 receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_17045, "cytochrome P450 3A4");
-		datasetActivityDesc.put(Dataset.ChEMBL_11140, "dipeptidyl peptidase IV");
-		datasetActivityDesc.put(Dataset.ChEMBL_114, "adenosine A1 receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_90, "dopamine D4 receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_19905, "melanin-concentrating hormone receptor 1");
+		datasetActivityDesc.put(DataID.ChEMBL_107, "serotonin 2a (5-HT2a) receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_87, "cannabinoid CB1 receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_17045, "cytochrome P450 3A4");
+		datasetActivityDesc.put(DataID.ChEMBL_11140, "dipeptidyl peptidase IV");
+		datasetActivityDesc.put(DataID.ChEMBL_114, "adenosine A1 receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_90, "dopamine D4 receptor");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_100166, "kinesin-like protein 1");
-		datasetActivityDesc.put(Dataset.ChEMBL_13001, "matrix metalloproteinase-2");
-		datasetActivityDesc.put(Dataset.ChEMBL_104, "monoamine oxidase B");
-		datasetActivityDesc.put(Dataset.ChEMBL_65, "cytochrome P450 19A1");
-		datasetActivityDesc.put(Dataset.ChEMBL_61, "muscarinic acetylcholine receptor M1");
-		datasetActivityDesc.put(Dataset.ChEMBL_10280, "histamine H3 receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_51, "serotonin 1a (5-HT1a) receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_100, "norepinephrine transporter");
-		datasetActivityDesc.put(Dataset.ChEMBL_10260, "vanilloid receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_52, "alpha-2a adrenergic receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_11365, "cytochrome P450 2D6");
-		datasetActivityDesc.put(Dataset.ChEMBL_11359, "phosphodiesterase 4D");
+		datasetActivityDesc.put(DataID.ChEMBL_13001, "matrix metalloproteinase-2");
+		datasetActivityDesc.put(DataID.ChEMBL_104, "monoamine oxidase B");
+		datasetActivityDesc.put(DataID.ChEMBL_65, "cytochrome P450 19A1");
+		datasetActivityDesc.put(DataID.ChEMBL_61, "muscarinic acetylcholine receptor M1");
+		datasetActivityDesc.put(DataID.ChEMBL_10280, "histamine H3 receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_51, "serotonin 1a (5-HT1a) receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_100, "norepinephrine transporter");
+		datasetActivityDesc.put(DataID.ChEMBL_10260, "vanilloid receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_52, "alpha-2a adrenergic receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_11365, "cytochrome P450 2D6");
+		datasetActivityDesc.put(DataID.ChEMBL_11359, "phosphodiesterase 4D");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_28, "thymidylate synthase");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_11536, "ghrelin receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_8, "tyrosine-protein kinase ABL");
-		datasetActivityDesc.put(Dataset.ChEMBL_10434, "tyrosine-protein kinase SRC");
-		datasetActivityDesc.put(Dataset.ChEMBL_12670, "tyrosine-protein kinase receptor FLT3");
+		datasetActivityDesc.put(DataID.ChEMBL_8, "tyrosine-protein kinase ABL");
+		datasetActivityDesc.put(DataID.ChEMBL_10434, "tyrosine-protein kinase SRC");
+		datasetActivityDesc.put(DataID.ChEMBL_12670, "tyrosine-protein kinase receptor FLT3");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_20014, "serine/threonine-protein kinase Aurora-A");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_234, "insulin-like growth factor I receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_12261, "c-Jun N-terminal kinase 1");
-		datasetActivityDesc.put(Dataset.ChEMBL_12209, "carbonic anhydrase XII");
-		datasetActivityDesc.put(Dataset.ChEMBL_25, "glucocorticoid receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_36, "progesterone receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_43, "beta-2 adrenergic receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_219, "muscarinic acetylcholine receptor M3");
-		datasetActivityDesc.put(Dataset.ChEMBL_130, "dopamine D3 receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_105, "serotonin 1d (5-HT1d) receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_12261, "c-Jun N-terminal kinase 1");
+		datasetActivityDesc.put(DataID.ChEMBL_12209, "carbonic anhydrase XII");
+		datasetActivityDesc.put(DataID.ChEMBL_25, "glucocorticoid receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_36, "progesterone receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_43, "beta-2 adrenergic receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_219, "muscarinic acetylcholine receptor M3");
+		datasetActivityDesc.put(DataID.ChEMBL_130, "dopamine D3 receptor");
+		datasetActivityDesc.put(DataID.ChEMBL_105, "serotonin 1d (5-HT1d) receptor");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_11336, "neuropeptide Y receptor type 5");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_20174, "G protein-coupled receptor");
-		datasetActivityDesc.put(Dataset.ChEMBL_126, "cyclooxygenase-2");
+		datasetActivityDesc.put(DataID.ChEMBL_126, "cyclooxygenase-2");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_11225, "renin");
-		datasetActivityDesc.put(Dataset.ChEMBL_12252, "beta-secretase 1");
+		datasetActivityDesc.put(DataID.ChEMBL_12252, "beta-secretase 1");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_11682, "glycine transporter 1");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_134, "vasopressin V1a receptor");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_116, "oxytocin receptor");
@@ -345,25 +345,25 @@ public class DataProvider
 		//		datasetActivityDesc.put(Dataset.ChEMBL_10475, "neuropeptide Y receptor type 1");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_12679, "C5a anaphylatoxin chemotactic receptor");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_10579, "C-C chemokine receptor type 4");
-		datasetActivityDesc.put(Dataset.ChEMBL_11575, "C-C chemokine receptor type 2");
+		datasetActivityDesc.put(DataID.ChEMBL_11575, "C-C chemokine receptor type 2");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_18061,
 		//				"sodium channel protein type IX alpha subunit");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_237, "leukotriene A4 hydrolase");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_276, "phosphodiesterase 4A");
-		datasetActivityDesc.put(Dataset.ChEMBL_11534, "cathepsin S");
+		datasetActivityDesc.put(DataID.ChEMBL_11534, "cathepsin S");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_10198,
 		//				"voltage-gated potassium channel subunit Kv1.5");
-		datasetActivityDesc.put(Dataset.ChEMBL_10498, "cathepsin L");
-		datasetActivityDesc.put(Dataset.ChEMBL_12911, "cytochrome P450 2C9");
+		datasetActivityDesc.put(DataID.ChEMBL_10498, "cathepsin L");
+		datasetActivityDesc.put(DataID.ChEMBL_12911, "cytochrome P450 2C9");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_12968, "orexin receptor 2");
-		datasetActivityDesc.put(Dataset.ChEMBL_100579, "nicotinic acid receptor 1");
+		datasetActivityDesc.put(DataID.ChEMBL_100579, "nicotinic acid receptor 1");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_100126, "serine/threonine-protein kinase B-raf");
-		datasetActivityDesc.put(Dataset.ChEMBL_10378, "cathepsin B");
+		datasetActivityDesc.put(DataID.ChEMBL_10378, "cathepsin B");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_10417, "P2X purinoceptor 7");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_10752,
 		//				"inhibitor of nuclear factor kappa B kinase beta subunit");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_10773, "interleukin-8 receptor B");
-		datasetActivityDesc.put(Dataset.ChEMBL_11631, "sphingosine 1-phosphate receptor Edg-1");
+		datasetActivityDesc.put(DataID.ChEMBL_11631, "sphingosine 1-phosphate receptor Edg-1");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_10927, "urotensin II receptor");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_11085, "melatonin receptor 1B");
 		//		datasetActivityDesc.put(Dataset.ChEMBL_11442, "liver glycogen phosphorylase");
@@ -372,28 +372,28 @@ public class DataProvider
 		//		datasetActivityDesc.put(Dataset.ChEMBL_12840,
 		//				"macrophage colony stimulating factor receptor");		
 
-		datasetActivityDesc.put(Dataset.MUV_466, "S1P1 rec. (GPCR) Agonist");
-		datasetActivityDesc.put(Dataset.MUV_548, "PKA (Kinase) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_600, "SF1 (Nuclear Receptor) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_644, "Rho-Kinase2 Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_652, "HIV RT-RNase Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_689, "Eph rec. A4 (Rec. Tyr. Kinase) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_692, "SF1 (Nuclear Receptor) Agonist");
-		datasetActivityDesc.put(Dataset.MUV_712, "HSP 90 (Chaperone) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_713, "ER-a-Coact. Bind. (PPI) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_733, "ER-ß-Coact. Bind. (PPI) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_737, "ER-a-Coact. Bind. (PPI) Potentiator");
-		datasetActivityDesc.put(Dataset.MUV_810, "FAK (Kinase) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_832, "Cathepsin G (Protease) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_466, "S1P1 rec. (GPCR) Agonist");
+		datasetActivityDesc.put(DataID.MUV_548, "PKA (Kinase) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_600, "SF1 (Nuclear Receptor) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_644, "Rho-Kinase2 Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_652, "HIV RT-RNase Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_689, "Eph rec. A4 (Rec. Tyr. Kinase) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_692, "SF1 (Nuclear Receptor) Agonist");
+		datasetActivityDesc.put(DataID.MUV_712, "HSP 90 (Chaperone) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_713, "ER-a-Coact. Bind. (PPI) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_733, "ER-ß-Coact. Bind. (PPI) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_737, "ER-a-Coact. Bind. (PPI) Potentiator");
+		datasetActivityDesc.put(DataID.MUV_810, "FAK (Kinase) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_832, "Cathepsin G (Protease) Inhibitor");
 		//		datasetActivityDesc.put(Dataset.MUV_846, "FXIa (Protease) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_852, "FXIIa (Protease) Inhibitor");
-		datasetActivityDesc.put(Dataset.MUV_858, "D1 rec. (GPCR) Allosteric Modulator");
-		datasetActivityDesc.put(Dataset.MUV_859, "M1 rec. (GPCR) Allosteric Modulator");
+		datasetActivityDesc.put(DataID.MUV_852, "FXIIa (Protease) Inhibitor");
+		datasetActivityDesc.put(DataID.MUV_858, "D1 rec. (GPCR) Allosteric Modulator");
+		datasetActivityDesc.put(DataID.MUV_859, "M1 rec. (GPCR) Allosteric Modulator");
 	}
 
 	private static KeyValueFileStore<String, CDKDataset> parsedDatasets;
 
-	public static CDKDataset getDataset(Dataset dataset)
+	public static CDKDataset getDataset(DataID dataset)
 	{
 		if (!datasets.containsKey(dataset))
 		{
@@ -428,20 +428,20 @@ public class DataProvider
 		return datasets.get(dataset);
 	}
 
-	private static CDKDataset getDatasetFromSDF(Dataset dataset)
+	private static CDKDataset getDatasetFromSDF(DataID dataset)
 			throws FileNotFoundException, CDKException, IOException
 	{
 		return DataLoader.getDatasetFromSDF(dataset.toString(),
 				DATA_FOLDER + File.separator + sdfDatasets.get(dataset), sdfEndpoints.get(dataset));
 	}
 
-	private static CDKDataset getDatasetFromCSV(Dataset dataset) throws CDKException
+	private static CDKDataset getDatasetFromCSV(DataID dataset) throws CDKException
 	{
 		return DataLoader.getDatasetFromCSV(dataset.toString(),
 				DATA_FOLDER + File.separator + dataset + ".csv", 0, 1);
 	}
 
-	private static CDKDataset getDatasetFromSMILES(Dataset dataset) throws CDKException
+	private static CDKDataset getDatasetFromSMILES(DataID dataset) throws CDKException
 	{
 		return DataLoader.getDatasetFromSMILES(dataset.toString(),
 				DATA_FOLDER + File.separator + dataset + ".smi");
@@ -491,10 +491,10 @@ public class DataProvider
 		return CountedSet.create(smiles).getMaxCount(false) > 1;
 	}
 
-	public static Comparator<Dataset> CFPDataComparator = new Comparator<Dataset>()
+	public static Comparator<Object> CFPDataComparator = new Comparator<Object>()
 	{
 		@Override
-		public int compare(Dataset o1, Dataset o2)
+		public int compare(Object o1, Object o2)
 		{
 			String s1 = o1.toString();
 			String s2 = o2.toString();
@@ -519,52 +519,52 @@ public class DataProvider
 		}
 	};
 
-	public static Set<Dataset> cfpDatasets()
+	public static Set<DataID> cfpDatasets()
 	{
 		return cfpDatasets;
 	}
 
-	public static Dataset[] cfpDatasetsSorted()
+	public static DataID[] cfpDatasetsSorted()
 	{
-		return cfpDatasets.stream().sorted(CFPDataComparator).toArray(size -> new Dataset[size]);
+		return cfpDatasets.stream().sorted(CFPDataComparator).toArray(size -> new DataID[size]);
 	}
 
-	private static Set<Dataset> cfpDatasetsFiltered(Predicate<Dataset> filter)
+	private static Set<DataID> cfpDatasetsFiltered(Predicate<DataID> filter)
 	{
 		return cfpDatasets.stream().filter(filter).collect(Collectors.toSet());
 	}
 
-	public static Set<Dataset> cfpDatasetsCPDB()
+	public static Set<DataID> cfpDatasetsCPDB()
 	{
 		return cfpDatasetsFiltered(d -> d.toString().startsWith("CPDBAS_"));
 	}
 
-	public static Set<Dataset> cfpDatasetsChEMBL()
+	public static Set<DataID> cfpDatasetsChEMBL()
 	{
 		return cfpDatasetsFiltered(d -> d.toString().startsWith("ChEMBL_"));
 	}
 
-	public static Set<Dataset> cfpDatasetsMUV()
+	public static Set<DataID> cfpDatasetsMUV()
 	{
 		return cfpDatasetsFiltered(d -> d.toString().startsWith("MUV_"));
 	}
 
-	public static Set<Dataset> cfpDatasetsDUD()
+	public static Set<DataID> cfpDatasetsDUD()
 	{
 		return cfpDatasetsFiltered(d -> d.toString().startsWith("DUD_"));
 	}
 
-	public static Set<Dataset> cfpDatasetsBalanced()
+	public static Set<DataID> cfpDatasetsBalanced()
 	{
 		return cfpDatasetsCategory(BALANCED_DATASETS);
 	}
 
-	public static Set<Dataset> cfpDatasetsCategory(String category)
+	public static Set<DataID> cfpDatasetsCategory(String category)
 	{
 		return cfpDatasetsFiltered(d -> datasetCategory.get(d).equals(category));
 	}
 
-	public static Set<Dataset> cfpDatasetsSubCategory(String subCategory)
+	public static Set<DataID> cfpDatasetsSubCategory(String subCategory)
 	{
 		return cfpDatasetsFiltered(d -> datasetSubCategory.get(d).equals(subCategory));
 	}
@@ -578,11 +578,11 @@ public class DataProvider
 	//		return new File(dataFolder + File.separator + name + ".csv").exists();
 	//	}
 
-	public static ResultSet getInfo(boolean cite, Dataset... datasets)
+	public static ResultSet getInfo(boolean cite, DataID... datasets)
 	{
 		ResultSet set = new ResultSet();
 		set.setNicePropery("size", "compounds");
-		for (Dataset dataset : datasets)
+		for (DataID dataset : datasets)
 		{
 			//			System.out.println(n);
 
@@ -625,13 +625,13 @@ public class DataProvider
 		return set;
 	}
 
-	public static ResultSet getCategoryInfo(boolean cite, Dataset... dataset)
+	public static ResultSet getCategoryInfo(boolean cite, DataID... dataset)
 	{
 		ResultSet set = getInfo(cite, dataset);
 
 		for (int idx = 0; idx < set.getNumResults(); idx++)
 		{
-			Dataset n = Dataset.valueOf(set.getResultValue(idx, "name").toString());
+			DataID n = DataID.valueOf(set.getResultValue(idx, "name").toString());
 			set.setResultValue(idx, "category", datasetCategory.get(n));
 			set.setResultValue(idx, "subCategory", datasetSubCategory.get(n));
 			set.setResultValue(idx, "numDatasets", "1");
@@ -683,12 +683,12 @@ public class DataProvider
 		return set;
 	}
 
-	public static String getDatasetEndpoint(Dataset d)
+	public static String getDatasetEndpoint(DataID d)
 	{
 		return datasetActivityDesc.get(d);
 	}
 
-	public static Set<String> getDatasetURLs(Dataset d)
+	public static Set<String> getDatasetURLs(DataID d)
 	{
 		HashSet<String> urls = new LinkedHashSet<>();
 		for (Source s : citation.get(d))
@@ -696,7 +696,7 @@ public class DataProvider
 		return urls;
 	}
 
-	public static Map<String, String> getModelDatasetCitations(Dataset d)
+	public static Map<String, String> getModelDatasetCitations(DataID d)
 	{
 		HashMap<String, String> map = new LinkedHashMap<>();
 		for (Source s : citation.get(d))
@@ -715,11 +715,11 @@ public class DataProvider
 			System.out.println(getCategoryInfo(true, cfpDatasetsSorted()).toNiceString());
 		}
 		{
-			Dataset data[] = Dataset.values();
+			DataID data[] = DataID.values();
 			//		Arrays.sort(data, CFPDataComparator);
 			//		System.out.println(ArrayUtil.toString(data));
-			data = new Dataset[] { Dataset.CPDBAS_Mouse };
-			for (Dataset dat : data)
+			data = new DataID[] { DataID.CPDBAS_Mouse };
+			for (DataID dat : data)
 			{
 				CDKDataset da = DataProvider.getDataset(dat);
 				if (!da.warnings.isEmpty())

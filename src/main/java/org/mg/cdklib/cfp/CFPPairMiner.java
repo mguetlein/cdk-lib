@@ -12,7 +12,7 @@ import org.apache.commons.math3.stat.inference.TestUtils;
 import org.mg.cdklib.CDKConverter;
 import org.mg.cdklib.data.CDKDataset;
 import org.mg.cdklib.data.DataProvider;
-import org.mg.cdklib.data.DataProvider.Dataset;
+import org.mg.cdklib.data.DataProvider.DataID;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.HashUtil;
 import org.mg.javalib.util.ListUtil;
@@ -234,7 +234,7 @@ public class CFPPairMiner extends CFPMiner
 
 	public static void demo() throws Exception
 	{
-		Dataset d = Dataset.NCTRER;
+		DataID d = DataID.NCTRER;
 		CFPType type = CFPType.ecfp2;
 		FeatureSelection featureSelection = FeatureSelection.filt;
 		int hashfoldsize = 1024;
