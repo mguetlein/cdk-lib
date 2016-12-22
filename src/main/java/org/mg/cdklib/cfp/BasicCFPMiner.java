@@ -27,7 +27,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 
 public class BasicCFPMiner implements Serializable
 {
-	private static final long serialVersionUID = 6L;
+	private static final long serialVersionUID = 7L;
 
 	protected int numCompounds = 0;
 	protected List<String> trainingDataSmiles;
@@ -99,6 +99,16 @@ public class BasicCFPMiner implements Serializable
 	public void setHashfoldsize(int hashfoldsize)
 	{
 		this.hashfoldsize = hashfoldsize;
+	}
+
+	public void setAbsMinFreq(int absMinFreq)
+	{
+		this.absMinFreq = absMinFreq;
+	}
+
+	public int getAbsMinFreq()
+	{
+		return absMinFreq;
 	}
 
 	public boolean isFragmentIncludedInCompound(int compound, CFPFragment fragment)

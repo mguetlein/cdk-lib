@@ -64,7 +64,7 @@ public class CFPMiner extends BasicCFPMiner
 		{
 			String uniq = CDKConverter.toAbsoluteSmiles(smi);
 			if (trainingUniqsToEndpoint.containsKey(uniq))
-				throw new IllegalStateException("no duplicates allowed!");
+				throw new IllegalStateException("no duplicates allowed! " + idx + " " + smi);
 			trainingUniqsToEndpoint.put(uniq, endpoints.get(idx));
 			idx++;
 		}
@@ -242,6 +242,12 @@ public class CFPMiner extends BasicCFPMiner
 		if (fragmentToCompound.size() <= hashfoldsize)
 			return;
 		List<String> domain = new ArrayList<String>(new HashSet<String>(endpoints));
+		if (domain.size() < 2)
+		{
+			System.err.println("CFPMiner: cannot apply chis square filter, endpoint-domain is <2 "
+					+ domain + ", remaining features: " + fragmentToCompound.size());
+			return;
+		}
 		List<String> subsetEndpoints = new ArrayList<String>();
 		for (Integer c : compoundSubset)
 			subsetEndpoints.add(endpoints.get(c));
