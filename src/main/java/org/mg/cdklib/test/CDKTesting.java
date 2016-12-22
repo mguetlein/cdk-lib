@@ -1,4 +1,4 @@
-package org.mg.cdklib;
+package org.mg.cdklib.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 
+import org.mg.cdklib.CDKConverter;
 import org.mg.javalib.io.External3DComputer;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.ChemFile;
