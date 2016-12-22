@@ -4,7 +4,8 @@ import org.mg.cdklib.cfp.BasicCFPMiner;
 import org.mg.cdklib.cfp.CFPType;
 import org.mg.cdklib.cfp.FeatureSelection;
 import org.mg.cdklib.data.CDKDataset;
-import org.mg.cdklib.data.DataLoader;
+import org.mg.cdklib.data.DataProvider;
+import org.mg.cdklib.data.DataProvider.Dataset;
 
 public class MineCFPFeatures
 {
@@ -15,7 +16,7 @@ public class MineCFPFeatures
 		//				"/home/martin/data/envipath/mastermatrix.ob.smi");
 		//		CDKDataset d = DataLoader.getDatasetFromSMILES("mastermatrix",
 		//				"/home/martin/data/fda_liver-toxicity-knowledge-database/LTKB.smi");
-		CDKDataset d = DataLoader.INSTANCE.getDataset("CPDBAS_Mouse");
+		CDKDataset d = DataProvider.getDataset(Dataset.CPDBAS_Mouse);
 
 		BasicCFPMiner miner = new BasicCFPMiner();
 		miner.setType(CFPType.ecfp4);

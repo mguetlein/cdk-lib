@@ -11,7 +11,8 @@ import java.util.Set;
 import org.apache.commons.math3.stat.inference.TestUtils;
 import org.mg.cdklib.CDKConverter;
 import org.mg.cdklib.data.CDKDataset;
-import org.mg.cdklib.data.DataLoader;
+import org.mg.cdklib.data.DataProvider;
+import org.mg.cdklib.data.DataProvider.Dataset;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.HashUtil;
 import org.mg.javalib.util.ListUtil;
@@ -233,13 +234,12 @@ public class CFPPairMiner extends CFPMiner
 
 	public static void demo() throws Exception
 	{
-		String datasetName = "NCTRER";
-		int run = 1;
+		Dataset d = Dataset.NCTRER;
 		CFPType type = CFPType.ecfp2;
 		FeatureSelection featureSelection = FeatureSelection.filt;
 		int hashfoldsize = 1024;
 
-		CDKDataset dataset = DataLoader.INSTANCE.getDataset(datasetName, run);
+		CDKDataset dataset = DataProvider.getDataset(d);
 		List<String> list = dataset.getSmiles();
 		List<String> endpointValues = dataset.getEndpoints();
 		ListUtil.scramble(new Random(1), list, endpointValues);

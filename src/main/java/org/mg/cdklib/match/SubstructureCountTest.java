@@ -4,7 +4,8 @@ import java.util.Arrays;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.mg.cdklib.data.CDKDataset;
-import org.mg.cdklib.data.DataLoader;
+import org.mg.cdklib.data.DataProvider;
+import org.mg.cdklib.data.DataProvider.Dataset;
 import org.mg.javalib.util.StringUtil;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.KlekotaRothFingerprinter;
@@ -15,7 +16,7 @@ public class SubstructureCountTest
 	{
 		SubstructureCountMatcher scm = SubstructureCountMatcherProvider
 				.getInstance(new KlekotaRothFingerprinter());
-		CDKDataset d = DataLoader.INSTANCE.getDataset("AMES");
+		CDKDataset d = DataProvider.getDataset(Dataset.AMES);
 		for (String smiles : d.getSmiles())
 		{
 			short[] counts = scm.matchCount(smiles);

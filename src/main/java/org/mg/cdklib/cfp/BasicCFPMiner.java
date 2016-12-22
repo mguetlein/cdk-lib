@@ -12,7 +12,7 @@ import java.util.Set;
 
 import org.mg.cdklib.CDKConverter;
 import org.mg.cdklib.data.CDKDataset;
-import org.mg.cdklib.data.DataLoader;
+import org.mg.cdklib.data.DataProvider;
 import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.util.CountedSet;
 import org.mg.javalib.util.DoubleArraySummary;
@@ -201,7 +201,7 @@ public class BasicCFPMiner implements Serializable
 
 	public static void main(String[] args) throws Exception
 	{
-		CDKDataset d = DataLoader.INSTANCE.getDataset("AMES");
+		CDKDataset d = DataProvider.getDataset(DataProvider.Dataset.AMES);
 		CFPMiner miner = new CFPMiner(d.getEndpoints());
 		miner.type = CFPType.ecfp4;
 		miner.featureSelection = FeatureSelection.filt;

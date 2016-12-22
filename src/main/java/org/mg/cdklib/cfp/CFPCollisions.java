@@ -2,7 +2,9 @@ package org.mg.cdklib.cfp;
 
 import java.io.File;
 
-import org.mg.cdklib.data.DataLoader;
+import org.mg.cdklib.data.CDKDataset;
+import org.mg.cdklib.data.DataProvider;
+import org.mg.cdklib.data.DataProvider.Dataset;
 import org.mg.javalib.datamining.ResultSet;
 import org.mg.javalib.datamining.ResultSetIO;
 
@@ -11,16 +13,15 @@ public class CFPCollisions
 
 	public static void print() throws Exception
 	{
-		DataLoader l = DataLoader.INSTANCE;
 		ResultSet res = new ResultSet();
-		String datasets[] = l.allDatasets();
 		//		CFPType types[] = new CFPType[] { CFPType.ecfp6, CFPType.ecfp4, CFPType.ecfp2, CFPType.ecfp0 };
 		CFPType types[] = new CFPType[] { CFPType.fcfp6, CFPType.fcfp4, CFPType.fcfp2,
 				CFPType.fcfp0 };
 		int dCount = 0;
-		for (String name : datasets)
+		for (Dataset name : DataProvider.cfpDatasets())
 		{
 			System.out.println(dCount + ": " + name);
+			CDKDataset d = DataProvider.getDataset(name);
 
 			for (CFPType type : types)
 			{
@@ -31,11 +32,11 @@ public class CFPCollisions
 
 				int idx = res.addResult();
 
-				CFPMiner miner = new CFPMiner(l.getDataset(name).getEndpoints());
+				CFPMiner miner = new CFPMiner(d.getEndpoints());
 				miner.type = type;
 				miner.featureSelection = FeatureSelection.filt;
 				miner.hashfoldsize = 1024;
-				miner.mine(l.getDataset(name).getSmiles());
+				miner.mine(d.getSmiles());
 
 				res.setResultValue(idx, "Dataset", name);
 				res.setResultValue(idx, "Type", type + "");
@@ -44,11 +45,11 @@ public class CFPCollisions
 
 				for (int size : new int[] { 1024, 2048, 4096, 8192 })
 				{
-					miner = new CFPMiner(l.getDataset(name).getEndpoints());
+					miner = new CFPMiner(d.getEndpoints());
 					miner.type = type;
 					miner.featureSelection = FeatureSelection.fold;
 					miner.hashfoldsize = size;
-					miner.mine(l.getDataset(name).getSmiles());
+					miner.mine(d.getSmiles());
 					miner.estimateCollisions(res, idx, size + " ");
 				}
 			}
