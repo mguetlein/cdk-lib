@@ -8,23 +8,33 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
+import org.apache.batik.swing.JSVGCanvas;
+import org.apache.commons.io.FileUtils;
 import org.mg.cdklib.AtomContainerUtil;
-import org.mg.javalib.gui.MultiImageIcon;
-import org.mg.javalib.gui.MultiImageIcon.Layout;
-import org.mg.javalib.gui.MultiImageIcon.Orientation;
+import org.mg.cdklib.CDKConverter;
+import org.mg.imagelib.ImageLoader;
+import org.mg.imagelib.ImageType;
+import org.mg.imagelib.ImageUtil;
+import org.mg.imagelib.MultiImageIcon;
+import org.mg.imagelib.MultiImageIcon.Layout;
+import org.mg.imagelib.MultiImageIcon.Orientation;
 import org.mg.javalib.util.ArrayUtil;
-import org.mg.javalib.util.ImageLoader;
+import org.mg.javalib.util.CollectionUtil;
 import org.mg.javalib.util.SwingUtil;
+import org.openscience.cdk.depict.Depiction;
+import org.openscience.cdk.depict.DepictionGenerator;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.exception.InvalidSmilesException;
 import org.openscience.cdk.graph.ConnectivityChecker;
@@ -32,6 +42,8 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.interfaces.IChemObject;
+import org.openscience.cdk.isomorphism.Mappings;
+import org.openscience.cdk.isomorphism.Pattern;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
 import org.openscience.cdk.renderer.font.AWTFontManager;
@@ -41,20 +53,25 @@ import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.visitor.AWTDrawVisitor;
 import org.openscience.cdk.silent.AtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
-import org.openscience.cdk.smiles.SmilesParser;
-
-import com.jgoodies.forms.builder.DefaultFormBuilder;
-import com.jgoodies.forms.layout.FormLayout;
+import org.openscience.cdk.smiles.smarts.SmartsPattern;
+import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
 public class CDKDepict
 {
-	public static void depictToPNG(String pngFile, IAtomContainer mol, int maxSize) throws Exception
+	public static void depictToPNG(String pngFile, IAtomContainer mol, int maxSize)
+			throws CDKException, IOException
 	{
 		BufferedImage image = depict(mol, maxSize);
 		ImageIO.write((RenderedImage) image, "PNG", new File(pngFile));
 	}
 
-	public static BufferedImage depict(IAtomContainer mol, int maxSize) throws Exception
+	public static byte[] depictToPNGBytes(IAtomContainer mol, int maxSize)
+			throws CDKException, IOException
+	{
+		return ImageUtil.imageToPNGBytes(depict(mol, maxSize));
+	}
+
+	public static BufferedImage depict(IAtomContainer mol, int maxSize) throws CDKException
 	{
 		IAtomContainerSet set = ConnectivityChecker.partitionIntoMolecules(mol);
 		BufferedImage image;
@@ -126,7 +143,8 @@ public class CDKDepict
 	public static String COLOR_PROP = "colorProp";
 
 	public static BufferedImage depictMatch(IAtomContainer mol, int atoms[],
-			boolean highlightOutgoingBonds, Color col, boolean crop, int size) throws Exception
+			boolean highlightOutgoingBonds, Color col, boolean crop, int size)
+			throws CloneNotSupportedException, CDKException
 	{
 		if (atoms == null || atoms.length == 0)
 			if (crop)
@@ -154,7 +172,7 @@ public class CDKDepict
 	}
 
 	public static BufferedImage depictMatch(IAtomContainer mol, Color palette[], boolean crop,
-			int size) throws Exception
+			int size) throws CDKException
 	{
 		BufferedImage image = null;
 		IAtomContainerSet set = ConnectivityChecker.partitionIntoMolecules(mol);
@@ -201,11 +219,11 @@ public class CDKDepict
 	 * @param crop
 	 * @param size
 	 * @return
-	 * @throws Exception
+	 * @throws CDKException 
 	 */
 	@SuppressWarnings("unchecked")
 	private static BufferedImage depictMatchConnected(IAtomContainer mol, Color palette[],
-			boolean crop, int size) throws Exception
+			boolean crop, int size) throws CDKException
 	{
 		if (crop && size == -1)
 			throw new IllegalArgumentException();
@@ -346,8 +364,84 @@ public class CDKDepict
 		return l;
 	}
 
+	public static BufferedImage depictMatch(IAtomContainer mol, String smarts, Color col,
+			boolean crop, int size) throws CDKException, IOException, CloneNotSupportedException
+	{
+		SmartsPattern sp = SmartsPattern.create(smarts, SilentChemObjectBuilder.getInstance());
+		Set<Integer> atoms = new HashSet<>();
+		Mappings map = sp.matchAll(mol);
+		for (int[] is : map)
+			for (int i : is)
+				atoms.add(i);
+		int a[] = new int[0];
+		if (atoms.size() > 0)
+			a = ArrayUtil.toPrimitiveIntArray(CollectionUtil.toArray(atoms));
+		return depictMatch(mol, a, false, col, crop, size);
+	}
+
+	public static byte[] depictMatchToPNGBytes(IAtomContainer mol, String smarts, Color col,
+			boolean crop, int size) throws IOException, CDKException, CloneNotSupportedException
+	{
+		return ImageUtil.imageToPNGBytes(depictMatch(mol, smarts, col, crop, size));
+	}
+
+	private static Depiction depictMatch2Depiction(IAtomContainer mol, String smarts)
+			throws IOException, CDKException
+	{
+		AtomContainerManipulator.suppressHydrogens(mol);
+		DepictionGenerator dptgen = new DepictionGenerator();
+		if (smarts != null)
+		{
+			Pattern ptrn = SmartsPattern.create(smarts, SilentChemObjectBuilder.getInstance());
+			Iterable<IChemObject> hits = ptrn.matchAll(mol).uniqueAtoms().toChemObjects();
+			dptgen = dptgen.withHighlight(hits, Color.RED);
+		}
+		else
+		{
+			dptgen = dptgen.withAtomColors();
+		}
+		return dptgen.depict(mol);
+	}
+
+	public static BufferedImage depictMatch2Image(IAtomContainer mol, String smarts)
+			throws IOException, CDKException
+	{
+		return depictMatch2Depiction(mol, smarts).toImg();
+	}
+
+	public static byte[] depictMatch2Bytes(IAtomContainer mol, String smarts, ImageType type)
+			throws IOException, CDKException
+	{
+		if (type == ImageType.svg)
+			return depictMatch2Depiction(mol, smarts).toSvgStr().getBytes();
+		else
+			return ImageUtil.imageToPNGBytes(depictMatch2Image(mol, smarts));
+	}
+
+	public static void depictMatch2File(IAtomContainer mol, String smarts, String file)
+			throws IOException, CDKException, CloneNotSupportedException
+	{
+		FileUtils.writeByteArrayToFile(new File(file),
+				depictMatch2Bytes(mol, smarts, ImageType.fromFilename(file)));
+	}
+
+	public static JSVGCanvas depictMatch2ToSVGCanvas(IAtomContainer mol, String smarts)
+			throws IOException, CDKException, CloneNotSupportedException
+	{
+		File f = File.createTempFile("smiles", ".svg");
+		depictMatch2File(mol, smarts, f.getPath());
+		return ImageUtil.svgFileToCanvas(f.getPath());
+	}
+
 	public static void demo() throws InvalidSmilesException, Exception
 	{
+
+		//		SwingUtil.showInDialog(
+		//				new JLabel(new ImageIcon(depictMatch2(CDKConverter.parseSmiles("CCC=O"), null))));
+		SwingUtil.showInDialog(depictMatch2ToSVGCanvas(
+				CDKConverter.parseSmiles(
+						"OC1C2C(N(C)C)C(=O)C(=C(O)N)C(=O)C2(O)C(=O)C2=C(O)c3c(C(C12)(C)O)c(Cl)ccc3O"),
+				null));
 		//		{
 		//			DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p"));
 		//			for (Integer size : new Integer[] { 100, -1 })
@@ -363,32 +457,32 @@ public class CDKDepict
 		//			SwingUtil.showInFrame(new JScrollPane(b.getPanel()));
 		//		}
 		{
-			DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p,20dlu,p,20dlu,p"));
-			int atoms[] = new int[] { 2, 3, 4 };
-			for (Integer size : new Integer[] { 75, -1 })
-			{
-				for (boolean crop : new boolean[] { true, false })
-				{
-					if (crop && size == -1)
-						continue;
-
-					for (boolean bonds : new boolean[] { true, false })
-					{
-						for (String smiles : new String[] { "O=C1C2=C(C=CC=C2)C(=O)C3=C1C=CC=C3",
-								"C1(=C(C=CC=C1)N)OC.[H]Cl", "[Na].[H]Cl[Mg]" })
-						{
-
-							BufferedImage img = depictMatch(
-									new SmilesParser(SilentChemObjectBuilder.getInstance())
-											.parseSmiles(smiles),
-									atoms, bonds, Color.RED, crop, size);
-							b.append(getLabel(img, smiles + " crop:" + crop + " size:" + size
-									+ " bonds:" + bonds));
-						}
-					}
-				}
-			}
-			SwingUtil.showInFrame(new JScrollPane(b.getPanel()));
+			//			DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p,20dlu,p,20dlu,p"));
+			//			int atoms[] = new int[] { 2, 3, 4 };
+			//			for (Integer size : new Integer[] { 75, -1 })
+			//			{
+			//				for (boolean crop : new boolean[] { true, false })
+			//				{
+			//					if (crop && size == -1)
+			//						continue;
+			//
+			//					for (boolean bonds : new boolean[] { true, false })
+			//					{
+			//						for (String smiles : new String[] { "O=C1C2=C(C=CC=C2)C(=O)C3=C1C=CC=C3",
+			//								"C1(=C(C=CC=C1)N)OC.[H]Cl", "[Na].[H]Cl[Mg]" })
+			//						{
+			//
+			//							BufferedImage img = depictMatch(
+			//									new SmilesParser(SilentChemObjectBuilder.getInstance())
+			//											.parseSmiles(smiles),
+			//									atoms, bonds, Color.RED, crop, size);
+			//							b.append(getLabel(img, smiles + " crop:" + crop + " size:" + size
+			//									+ " bonds:" + bonds));
+			//						}
+			//					}
+			//				}
+			//			}
+			//			SwingUtil.showInFrame(new JScrollPane(b.getPanel()));
 		}
 		System.exit(1);
 
