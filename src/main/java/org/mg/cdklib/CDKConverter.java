@@ -63,11 +63,27 @@ public class CDKConverter
 
 	private static HashMap<String, IAtomContainer> smilesToMol = new HashMap<String, IAtomContainer>();
 
-	public static synchronized IAtomContainer parseSmiles(String smiles) throws InvalidSmilesException
+	/**
+	 * returns a cloned instance (as e.g. depiction changes a molecule)
+	 * 
+	 * @param smiles
+	 * @return
+	 * @throws InvalidSmilesException
+	 */
+	public static synchronized IAtomContainer parseSmiles(String smiles)
+			throws InvalidSmilesException
 	{
 		if (!smilesToMol.containsKey(smiles))
-			smilesToMol.put(smiles, new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles));
-		return smilesToMol.get(smiles);
+			smilesToMol.put(smiles,
+					new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles));
+		try
+		{
+			return smilesToMol.get(smiles).clone();
+		}
+		catch (CloneNotSupportedException e) // should not happen
+		{
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static void setMolForSmiles(String smi, IAtomContainer a)
@@ -77,11 +93,20 @@ public class CDKConverter
 
 	private static HashMap<String, IAtomContainer> inchiToMol = new HashMap<String, IAtomContainer>();
 
+	/**
+	 * returns a cloned instance (as e.g. depiction changes a molecule)
+	 * 
+	 * @param inchi
+	 * @return
+	 * @throws IOException
+	 * @throws CDKException
+	 */
 	public static IAtomContainer parseInchi(String inchi) throws IOException, CDKException
 	{
 		if (!inchiToMol.containsKey(inchi))
 		{
-			INChIPlainTextReader reader = new INChIPlainTextReader(new ByteArrayInputStream(inchi.getBytes()));
+			INChIPlainTextReader reader = new INChIPlainTextReader(
+					new ByteArrayInputStream(inchi.getBytes()));
 			IChemFile content = (IChemFile) reader.read((IChemObject) new ChemFile());
 			reader.close();
 			List<IAtomContainer> l = ChemFileManipulator.getAllAtomContainers(content);
@@ -90,7 +115,14 @@ public class CDKConverter
 			IAtomContainer m = l.get(0);
 			inchiToMol.put(inchi, m);
 		}
-		return inchiToMol.get(inchi);
+		try
+		{
+			return inchiToMol.get(inchi).clone();
+		}
+		catch (CloneNotSupportedException e) // should not happen
+		{
+			throw new RuntimeException(e);
+		}
 	}
 
 	public static void validateSmiles(String smiles) throws InvalidSmilesException
