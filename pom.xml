@@ -27,6 +27,13 @@
       <artifactId>cdk-depict</artifactId>
       <version>${cdk.version}</version>
     </dependency>
+
+   	 <dependency>
+      <groupId>org.openscience.cdk</groupId>
+      <artifactId>cdk-smarts</artifactId>
+      <version>${cdk.version}</version>
+    </dependency>
+
    
 	 <dependency>
       <groupId>org.openscience.cdk</groupId>
