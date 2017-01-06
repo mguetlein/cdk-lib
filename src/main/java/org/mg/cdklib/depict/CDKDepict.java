@@ -82,6 +82,14 @@ public class CDKDepict
 
 	public static BufferedImage depict(IAtomContainer mol, int maxSize) throws CDKException
 	{
+		try
+		{
+			mol = mol.clone();
+		}
+		catch (CloneNotSupportedException e)
+		{
+			throw new RuntimeException(e);
+		}
 		IAtomContainerSet set = ConnectivityChecker.partitionIntoMolecules(mol);
 		BufferedImage image;
 		if (set.getAtomContainerCount() < 2)
@@ -100,13 +108,34 @@ public class CDKDepict
 		return image;
 	}
 
+	/**
+	 * this may change the molecule, you might to clone beforehand
+	 * 
+	 * @param mol
+	 * @return
+	 * @throws CDKException
+	 */
 	private static BufferedImage depictConnected(IAtomContainer mol) throws CDKException
 	{
 		return new DepictionGenerator().withTerminalCarbons().withAtomColors().depict(mol).toImg();
 	}
 
+	/**
+	 * mol is not cloned here, as this method expects properties in atoms and bonds,
+	 * i.e., it should have been cloned before
+	 * 
+	 * @param pngFile
+	 * @param mol
+	 * @param cols
+	 * @param crop
+	 * @param size
+	 * @param drawCarbonSymbolsInSelection
+	 * @throws CDKException
+	 * @throws IOException
+	 */
 	public static void depictMatchToPNG(String pngFile, IAtomContainer mol, Color[] cols,
-			boolean crop, int size, boolean drawCarbonSymbolsInSelection) throws Exception
+			boolean crop, int size, boolean drawCarbonSymbolsInSelection)
+			throws CDKException, IOException
 	{
 		BufferedImage image = depictMatch(mol, cols, crop, size, drawCarbonSymbolsInSelection);
 		ImageIO.write((RenderedImage) image, "PNG", new File(pngFile));
@@ -114,7 +143,7 @@ public class CDKDepict
 
 	public static void depictMatchToPNG(String pngFile, IAtomContainer mol, int atoms[],
 			boolean highlightOutgoingBonds, Color col, boolean crop, int maxSize,
-			boolean drawCarbonSymbolsInSelection) throws Exception
+			boolean drawCarbonSymbolsInSelection) throws CDKException, IOException
 	{
 		BufferedImage image = depictMatch(mol, atoms, highlightOutgoingBonds, col, crop, maxSize,
 				drawCarbonSymbolsInSelection);
@@ -125,12 +154,19 @@ public class CDKDepict
 
 	public static BufferedImage depictMatch(IAtomContainer mol, int atoms[],
 			boolean highlightOutgoingBonds, Color col, boolean crop, int size,
-			boolean drawCarbonSymbolsInSelection) throws CloneNotSupportedException, CDKException
+			boolean drawCarbonSymbolsInSelection) throws CDKException
 	{
 		if (atoms == null || atoms.length == 0)
 			if (crop)
 				throw new IllegalArgumentException();
-		mol = mol.clone();
+		try
+		{
+			mol = mol.clone();
+		}
+		catch (CloneNotSupportedException e)
+		{
+			throw new RuntimeException(e);
+		}
 		for (IChemObject c : AtomContainerUtil.getAtomsAndBonds(mol))
 			c.setProperty(COLOR_PROP, null);
 		for (int j = 0; j < mol.getAtomCount(); j++)
@@ -152,7 +188,19 @@ public class CDKDepict
 		return depictMatch(mol, new Color[] { col }, crop, size, drawCarbonSymbolsInSelection);
 	}
 
-	public static BufferedImage depictMatch(IAtomContainer mol, Color palette[], boolean crop,
+	/**
+	 * mol is not cloned here, as this method expects properties in atoms and bonds,
+	 * i.e., it should have been cloned before
+	 * 
+	 * @param mol
+	 * @param palette
+	 * @param crop
+	 * @param size
+	 * @param drawCarbonSymbolsInSelection
+	 * @return
+	 * @throws CDKException
+	 */
+	private static BufferedImage depictMatch(IAtomContainer mol, Color palette[], boolean crop,
 			int size, boolean drawCarbonSymbolsInSelection) throws CDKException
 	{
 		BufferedImage image = null;
@@ -194,7 +242,6 @@ public class CDKDepict
 	 * atoms / bonds must have property {@link COLOR_PROP} assigned
 	 * null -> no highlight
 	 * value (must be integer) -> index in pallete color array
-	 * 
 	 * 
 	 * @param mol
 	 * @param palette
@@ -364,7 +411,7 @@ public class CDKDepict
 	}
 
 	public static BufferedImage depictMatch(IAtomContainer mol, String smarts, Color col,
-			boolean crop, int size) throws CDKException, IOException, CloneNotSupportedException
+			boolean crop, int size) throws CDKException, IOException
 	{
 		SmartsPattern sp = SmartsPattern.create(smarts, SilentChemObjectBuilder.getInstance());
 		Set<Integer> atoms = new HashSet<>();

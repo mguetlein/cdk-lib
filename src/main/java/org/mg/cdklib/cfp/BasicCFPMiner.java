@@ -431,7 +431,6 @@ public class BasicCFPMiner implements Serializable
 			Integer mol = getCompoundsForFragment(f1).iterator().next();
 			IAtomContainer molC = CDKConverter.parseSmiles(trainingDataSmiles.get(mol));
 
-			//Set<Integer> atoms1 = getAtomsMultiple(molC, f1);
 			Set<Set<Integer>> atoms1 = getAtomsMultipleDistinct(molC, f1);
 			int numAtoms1 = atoms1.iterator().next().size();
 			int numMatches1 = atoms1.size();
@@ -442,7 +441,6 @@ public class BasicCFPMiner implements Serializable
 				if (f1.equals(f2))
 					continue;
 				// get atom-matches for other fragment
-				//Set<Integer> atoms2 = getAtomsMultiple(molC, f2);
 				Set<Set<Integer>> atoms2 = getAtomsMultipleDistinct(molC, f2);
 				int numAtoms2 = atoms2.iterator().next().size();
 				int numMatches2 = atoms2.size();

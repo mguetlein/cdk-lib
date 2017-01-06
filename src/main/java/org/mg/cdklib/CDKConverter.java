@@ -64,7 +64,7 @@ public class CDKConverter
 	private static HashMap<String, IAtomContainer> smilesToMol = new HashMap<String, IAtomContainer>();
 
 	/**
-	 * returns a cloned instance (as e.g. depiction changes a molecule)
+	 * returns a the same instance each time, be carefull to clone it before changing it
 	 * 
 	 * @param smiles
 	 * @return
@@ -76,14 +76,7 @@ public class CDKConverter
 		if (!smilesToMol.containsKey(smiles))
 			smilesToMol.put(smiles,
 					new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles));
-		try
-		{
-			return smilesToMol.get(smiles).clone();
-		}
-		catch (CloneNotSupportedException e) // should not happen
-		{
-			throw new RuntimeException(e);
-		}
+		return smilesToMol.get(smiles);
 	}
 
 	public static void setMolForSmiles(String smi, IAtomContainer a)
@@ -94,7 +87,7 @@ public class CDKConverter
 	private static HashMap<String, IAtomContainer> inchiToMol = new HashMap<String, IAtomContainer>();
 
 	/**
-	 * returns a cloned instance (as e.g. depiction changes a molecule)
+	 * returns a the same instance each time, be carefull to clone it before changing it
 	 * 
 	 * @param inchi
 	 * @return
@@ -115,14 +108,7 @@ public class CDKConverter
 			IAtomContainer m = l.get(0);
 			inchiToMol.put(inchi, m);
 		}
-		try
-		{
-			return inchiToMol.get(inchi).clone();
-		}
-		catch (CloneNotSupportedException e) // should not happen
-		{
-			throw new RuntimeException(e);
-		}
+		return inchiToMol.get(inchi);
 	}
 
 	public static void validateSmiles(String smiles) throws InvalidSmilesException
